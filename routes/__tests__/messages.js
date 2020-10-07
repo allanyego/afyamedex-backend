@@ -88,4 +88,22 @@ describe("/messages", function () {
       }
     });
   });
+
+  describe("GET /user-messages?users=userA;userB", function () {
+    it("should return a list of messages between specified users", async (done) => {
+      try {
+        const resp = await request
+          .get(`${url}/user-messages?users=${tempPatient._id};${tempDoc._id}`)
+          .set({
+            Authorization: `Bearer ${tempPatient.token}`,
+          });
+
+        expect(resp.status).toBe(200);
+        expect(resp.body.data.length).toBe(1);
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+  });
 });

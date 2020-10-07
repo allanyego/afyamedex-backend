@@ -27,6 +27,27 @@ router.get("/user-threads/:userId", auth, async function (req, res, next) {
   }
 });
 
+router.get("/user-messages", auth, async function (req, res, next) {
+  let { users } = req.query;
+  users = users.split(";");
+
+  if (!users.includes(res.locals.userId)) {
+    return res.status(401).json(
+      createResponse({
+        error: "unauthorized access",
+      })
+    );
+  }
+
+  try {
+    res.json({
+      data: await controller.getUserMessages(...users),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/:threadId", auth, async function (req, res, next) {
   try {
     res.json(

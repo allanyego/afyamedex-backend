@@ -32,8 +32,8 @@ async function add(data) {
   return thread;
 }
 
+const pop = "_id fullName";
 async function get(thread, userId) {
-  const pop = "_id fullName";
   return await Message.find({
     thread,
     $or: [{ sender: userId }, { recipient: userId }],
@@ -52,8 +52,20 @@ async function getUserThreads(userId) {
     .populate("participants", "_id fullName");
 }
 
+async function getUserMessages(userA, userB) {
+  return await Message.find({
+    $or: [
+      { sender: userA, recipient: userB },
+      { sender: userB, recipient: userA },
+    ],
+  })
+    .populate("sender", pop)
+    .populate("recipient", pop);
+}
+
 module.exports = {
   add,
   get,
   getUserThreads,
+  getUserMessages,
 };

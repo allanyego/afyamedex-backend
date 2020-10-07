@@ -30,7 +30,9 @@ async function get({ username, patient }) {
   }
 
   if (username) {
-    ops.username = username;
+    ops.username = {
+      $regex: username,
+    };
   }
 
   return await User.find(ops).select("-password");

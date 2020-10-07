@@ -23,7 +23,6 @@ router.get("/", async function (req, res, next) {
       })
     );
   } catch (error) {
-    console.log("What's up", error);
     next(error);
   }
 });
@@ -46,7 +45,6 @@ router.post("/signin", async function (req, res, next) {
       data: await controller.authenticate(req.body),
     });
   } catch (error) {
-    console.log(error);
     if (isClientError(error)) {
       return res.json(
         createResponse({
@@ -88,11 +86,10 @@ router.post("/", async function (req, res, next) {
       })
     );
   } catch (error) {
-    console.log("User create error", error);
-    if (error.message === "Possible duplicate.") {
+    if (isClientError(error)) {
       return res.json(
         createResponse({
-          error: "There is a stream existing with similar details.",
+          error: error.message,
         })
       );
     }
@@ -119,6 +116,13 @@ router.put("/:userId", auth, async function (req, res, next) {
       })
     );
   } catch (error) {
+    if (isClientError(error)) {
+      return res.json(
+        createResponse({
+          error: error.message,
+        })
+      );
+    }
     next(error);
   }
 });
@@ -153,6 +157,13 @@ router.post("/reviews/:userId", auth, async function (req, res, next) {
       })
     );
   } catch (error) {
+    if (isClientError(error)) {
+      return res.json(
+        createResponse({
+          error: error.message,
+        })
+      );
+    }
     next(error);
   }
 });

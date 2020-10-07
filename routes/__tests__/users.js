@@ -115,4 +115,18 @@ describe("/users", function () {
       }
     });
   });
+
+  describe("GET ?username=username", function () {
+    it("should return patient users matching username expression", async (done) => {
+      try {
+        const resp = await request.get(`${BASE_URL}/users?username=test_&patient=true`);
+
+        expect(resp.status).toBe(200);
+        expect(resp.body.data.length).toBe(1);
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+  });
 });
