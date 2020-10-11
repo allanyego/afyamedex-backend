@@ -4,11 +4,11 @@ const CustomError = require("../util/custom-error");
 
 async function add(data) {
   let thread, lastMessage;
-
+  
   if (data.thread) {
     thread = await Thread.findById(thread);
     if (!thread) {
-      return new CustomError("no thread by that identifier found");
+      throw new CustomError("no thread by that identifier found");
     }
 
     lastMessage = await Message.create(data);
