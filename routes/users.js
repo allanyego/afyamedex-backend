@@ -8,6 +8,7 @@ const createResponse = require("./helpers/create-response");
 const controller = require("../controllers/users");
 const sign = require("./helpers/sign");
 const auth = require("../middleware/auth");
+const isClientError = require("../util/is-client-error");
 
 router.get("/", async function (req, res, next) {
   const { username, patient } = req.query;
@@ -22,7 +23,6 @@ router.get("/", async function (req, res, next) {
       })
     );
   } catch (error) {
-    console.log("What's up", error);
     next(error);
   }
 });
@@ -99,11 +99,10 @@ router.post("/", async function (req, res, next) {
       })
     );
   } catch (error) {
-    console.log("User create error", error);
-    if (error.message === "Possible duplicate.") {
+    if (isClientError(error)) {
       return res.json(
         createResponse({
-          error: "There is a stream existing with similar details.",
+          error: error.message,
         })
       );
     }

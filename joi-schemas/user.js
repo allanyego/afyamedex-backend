@@ -4,8 +4,8 @@ const newSchema = Joi.object({
   fullName: Joi.string().required(),
   email: Joi.string().email().required(),
   username: Joi.string().required(),
-  gender: Joi.string().required(),
-  birthday: Joi.date().required(),
+  gender: Joi.string(),
+  birthday: Joi.date(),
   password: Joi.string().required(),
 });
 

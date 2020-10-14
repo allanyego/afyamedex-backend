@@ -94,9 +94,27 @@ router.put("/:appointmentId", auth, async function (req, res, next) {
   }
 
   try {
+    const { appointmentId } = req.params;
+    const appointment = await controller.findById(appointmentId);
+    if (!appointment) {
+      return res.json(
+        createResponse({
+          error: "no appointment match found",
+        })
+      );
+    }
+
+    if (appointment.professional !== res.locals.userId) {
+      return res.status(401).json(
+        createResponse({
+          error: "unathorized access",
+        })
+      );
+    }
+
     res.json(
       createResponse({
-        data: await controller.update(req.params.appointmentId, req.body),
+        data: await controller.update(appointmentId, req.body),
       })
     );
   } catch (error) {

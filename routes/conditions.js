@@ -6,6 +6,7 @@ const schema = require("../joi-schemas/condition");
 const createResponse = require("./helpers/create-response");
 const controller = require("../controllers/conditions");
 const isClientError = require("../util/is-client-error");
+const { USER } = require("../util/constants");
 
 router.get("/", async function (req, res, next) {
   try {
@@ -32,6 +33,14 @@ router.get("/:conditionId", async function (req, res, next) {
 });
 
 router.post("/", auth, async function (req, res, next) {
+  if (res.locals.userAccountType === USER.ACCOUNT_TYPES.PATIENT) {
+    return res.status(401).json(
+      createResponse({
+        error: "unathorized operation",
+      })
+    );
+  }
+
   try {
     await schema.newSchema.validateAsync(req.body);
   } catch (error) {

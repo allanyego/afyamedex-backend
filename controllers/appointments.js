@@ -35,11 +35,16 @@ async function get(_id) {
 }
 
 async function update(_id, data) {
-  await Appointment.updateOne({ _id }, data);
+  return await Appointment.updateOne({ _id }, data);
+}
+
+async function findById(id) {
+  return await Appointment.findById(id);
 }
 
 module.exports = {
   add,
   get,
   update,
+  findById,
 };
