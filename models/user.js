@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 const { USER } = require("../util/constants");
 
 const { PROFESSIONAL, PATIENT, INSTITUTION } = USER.ACCOUNT_TYPES;

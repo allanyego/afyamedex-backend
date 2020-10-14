@@ -54,7 +54,6 @@ router.post("/:professionalId", auth, async function (req, res, next) {
   try {
     await schema.newSchema.validateAsync(req.body);
   } catch (error) {
-    console.log("Joi error", error);
     return res.status(400).json(
       createResponse({
         error: error.message,

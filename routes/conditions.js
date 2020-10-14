@@ -36,7 +36,7 @@ router.post("/", auth, async function (req, res, next) {
   if (res.locals.userAccountType === USER.ACCOUNT_TYPES.PATIENT) {
     return res.status(401).json(
       createResponse({
-        error: "unathorized operation",
+        error: "Unauthorized operation",
       })
     );
   }

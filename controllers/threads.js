@@ -6,9 +6,9 @@ async function add(data) {
   let thread, lastMessage;
 
   if (data.thread) {
-    thread = await Thread.findById(thread);
+    thread = await Thread.findById(data.thread);
     if (!thread) {
-      return new CustomError("no thread by that identifier found");
+      throw new CustomError("no thread by that identifier found");
     }
 
     lastMessage = await Message.create(data);
@@ -32,9 +32,12 @@ async function add(data) {
   return thread;
 }
 
-async function get(thread) {
-  const pop = "_id fullName";
-  return await Message.find({ thread })
+const pop = "_id fullName";
+async function get(thread, userId) {
+  return await Message.find({
+    thread,
+    $or: [{ sender: userId }, { recipient: userId }],
+  })
     .populate("sender", pop)
     .populate("recipient", pop);
 }
@@ -46,11 +49,23 @@ async function getUserThreads(userId) {
     },
   })
     .populate("lastMessage", "body createdAt")
-    .populate("participants", "fullName");
+    .populate("participants", "_id fullName");
+}
+
+async function getUserMessages(userA, userB) {
+  return await Message.find({
+    $or: [
+      { sender: userA, recipient: userB },
+      { sender: userB, recipient: userA },
+    ],
+  })
+    .populate("sender", pop)
+    .populate("recipient", pop);
 }
 
 module.exports = {
   add,
   get,
   getUserThreads,
+  getUserMessages,
 };
