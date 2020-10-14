@@ -103,7 +103,7 @@ router.put("/:appointmentId", auth, async function (req, res, next) {
       );
     }
 
-    if (appointment.professional !== res.locals.userId) {
+    if (String(appointment.professional) !== res.locals.userId) {
       return res.status(401).json(
         createResponse({
           error: "unathorized access",
