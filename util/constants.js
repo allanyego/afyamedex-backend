@@ -20,7 +20,6 @@ const USER = {
 };
 
 module.exports = {
-  SLOT_TIME_MAP,
   APPOINTMENT,
   USER,
 };
