@@ -14,7 +14,8 @@ async function add(data) {
     lastMessage = await Message.create(data);
     thread.lastMessage = lastMessage._id;
 
-    return await thread.save();
+    await thread.save();
+    return await Thread.findById(thread._id).populate("lastMessage");
   }
 
   thread = await Thread.create({
@@ -29,7 +30,7 @@ async function add(data) {
   thread.lastMessage = lastMessage._id;
   await thread.save();
 
-  return thread;
+  return await Thread.findById(thread._id).populate("lastMessage");
 }
 
 const pop = "_id fullName";

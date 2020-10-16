@@ -9,7 +9,7 @@ var debug = require("debug")("timetable-backend:server");
 var http = require("http");
 const socketIO = require("socket.io");
 
-// const setupIO = require("../util/setup-io");
+const setupIO = require("../util/setup-io");
 
 /**
  * Get port from environment and store in Express.
@@ -27,8 +27,8 @@ var server = http.createServer(app);
 /**
  * Initiate socket.io and bind events
  */
-// const io = socketIO(server);
-// setupIO(io);
+const io = socketIO(server);
+setupIO(io);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -93,3 +93,7 @@ function onListening() {
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
 }
+
+module.exports = {
+  io,
+};
