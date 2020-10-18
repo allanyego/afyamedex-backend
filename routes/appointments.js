@@ -1,5 +1,6 @@
 var express = require("express");
 const mongoose = require("mongoose");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 var router = express.Router();
 
 const auth = require("../middleware/auth");
@@ -26,6 +27,40 @@ router.get("/:userId", auth, async function (req, res, next) {
       })
     );
   } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/checkout/:appointmentId", auth, async (req, res, next) => {
+  if (!req.body.duration) {
+    return res.status(400).json(
+      createResponse({
+        error: "'duration' is a required field",
+      })
+    );
+  }
+
+  try {
+    let duration = req.body.duration;
+    duration = duration < 10 ? 10 : duration;
+    const intent = await stripe.paymentIntents.create({
+      amount: Number(duration) * Number(process.env.CHARGE_RATE),
+      currency: "usd",
+      metadata: {
+        integration_check: "accept_a_payment",
+      },
+    });
+
+    res.json(
+      createResponse({
+        data: {
+          clientSecret: intent.client_secret,
+          amount: intent.amount,
+        },
+      })
+    );
+  } catch (error) {
+    console.log(error);
     next(error);
   }
 });

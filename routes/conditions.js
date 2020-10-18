@@ -12,7 +12,9 @@ router.get("/", async function (req, res, next) {
   try {
     res.json(
       createResponse({
-        data: await controller.get(),
+        data: await controller.get({
+          search: req.query.search || null,
+        }),
       })
     );
   } catch (error) {

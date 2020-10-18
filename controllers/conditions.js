@@ -8,8 +8,15 @@ async function add(data) {
   return await Condition.create(data);
 }
 
-async function get() {
-  return await Condition.find();
+async function get({ search }) {
+  let ops = {};
+  if (search) {
+    ops.name = {
+      $regex: search,
+    };
+  }
+
+  return await Condition.find(ops);
 }
 
 async function findById(_id) {

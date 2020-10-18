@@ -19,7 +19,10 @@ function setupIO(io) {
     // Join a socket to a room
     socket.on("join", (data) => {
       console.log("User subscribing to", data);
-      socket.join(data.room);
+
+      socket.join(data.room).to(data.room).emit("user-joined", {
+        userId: socket.customId,
+      });
     });
 
     // Keep track of online users
@@ -34,15 +37,25 @@ function setupIO(io) {
 
     // Pass messages
     socket.on("new-message", (data) => {
-      console.log("message received", data);
       socket.to(data.room).emit("new-message", {
         message: data.message,
       });
     });
 
+    // When a user leaves the room for whatever reason
+    socket.on("left-room", ({ room }) => {
+      socket.leave(room, () => {
+        io.to(room).emit("left-room", {
+          userId: socket.customId,
+        });
+      });
+    });
+
     // Socket disconnected
     socket.on("disconnect", () => {
-      socket.broadcast.emit("disconnected", onlineUsers[socket.id]);
+      socket.broadcast.emit("disconnected", {
+        userId: socket.customId,
+      });
 
       onlineUsers[socket.id] = null;
       socket.broadcast.emit("onlineUsers", onlineUsers);
