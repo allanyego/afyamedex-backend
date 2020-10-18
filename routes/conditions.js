@@ -35,7 +35,8 @@ router.get("/:conditionId", async function (req, res, next) {
 });
 
 router.post("/", auth, async function (req, res, next) {
-  if (res.locals.userAccountType === USER.ACCOUNT_TYPES.PATIENT) {
+  const accType = res.locals.userAccountType;
+  if (!accType || accType === USER.ACCOUNT_TYPES.PATIENT) {
     return res.status(401).json(
       createResponse({
         error: "Unauthorized operation",

@@ -34,7 +34,7 @@ describe("/conditions", function () {
     it("should return newly created condition", async (done) => {
       try {
         let resp = await request.post(`${BASE_URL}/users/signin`).send({
-          username: "devyego@gmail.com",
+          username: "tomhanks@gmail.com",
           password: process.env.TEST_USER_PASSWORD,
         });
 
