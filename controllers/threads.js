@@ -19,7 +19,7 @@ async function add(data) {
   }
 
   thread = await Thread.create({
-    participants: [data.sender, data.recipient],
+    participants: data.recipient ? [data.sender, data.recipient] : null,
   });
 
   lastMessage = await Message.create({
@@ -35,6 +35,10 @@ async function add(data) {
 
 const pop = "_id fullName";
 async function get(thread, userId) {
+  if (!userId) {
+    return getPublicThreadMessages(thread);
+  }
+
   return await Message.find({
     thread,
     $or: [{ sender: userId }, { recipient: userId }],
@@ -64,9 +68,25 @@ async function getUserMessages(userA, userB) {
     .populate("recipient", pop);
 }
 
+async function getPublicThreads() {
+  return await Thread.find({
+    participants: {
+      $eq: null,
+    },
+  }).populate("lastMessage");
+}
+
+async function getPublicThreadMessages(thread) {
+  return await Message.find({
+    thread,
+  }).populate("sender", pop);
+}
+
 module.exports = {
   add,
   get,
   getUserThreads,
   getUserMessages,
+  getPublicThreads,
+  getPublicThreadMessages,
 };

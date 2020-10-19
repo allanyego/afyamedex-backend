@@ -10,13 +10,22 @@ const BASE_URL = "/api/v1";
 
 afterAll(async function () {
   await Message.deleteMany({});
-  await Thread.deleteMany({});
+  await Thread.deleteMany({
+    name: {
+      $not: {
+        $regex: "^test_",
+      },
+    },
+  });
 });
 
 describe("/messages", function () {
   const url = `${BASE_URL}/messages`;
   let tempDoc = {
     _id: "5f79622bbe2ead0f7152437a",
+  };
+  let testGroupThread = {
+    _id: "5f8c89d0a2acfa99c3b3e077",
   };
   let tempPatient, testThread;
 
@@ -48,6 +57,46 @@ describe("/messages", function () {
         expect(resp.status).toBe(201);
         expect(resp.body.data.lastMessage).toBeDefined();
         testThread = resp.body.data;
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  describe("POST /", function () {
+    it("should successfully post new message to public group", async (done) => {
+      try {
+        let resp = await request
+          .post(url)
+          .send({
+            sender: tempPatient._id,
+            thread: testGroupThread._id,
+            body: "hi, world",
+          })
+          .set({
+            Authorization: `Bearer ${tempPatient.token}`,
+          });
+
+        expect(resp.status).toBe(201);
+        expect(resp.body.data.lastMessage).toBeDefined();
+        testThread = resp.body.data;
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  describe("GET /", function () {
+    it("should return a list of public threads", async (done) => {
+      try {
+        const resp = await request.get(`${url}/${testThread._id}`).set({
+          Authorization: `Bearer ${tempPatient.token}`,
+        });
+
+        expect(resp.status).toBe(200);
+        expect(resp.body.data.length).toBe(1);
         done();
       } catch (error) {
         done(error);

@@ -2,11 +2,16 @@ const mongoose = require("mongoose");
 
 const threadSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      default: null,
+    },
     participants: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
+        // required: true,
+        default: null,
       },
     ],
     lastMessage: {

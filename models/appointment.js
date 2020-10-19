@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { APPOINTMENT } = require("../util/constants");
 
 const {
-  STATUSES: { UNAPPROVED, APPROVED, REJECTED },
+  STATUSES: { UNAPPROVED, APPROVED, REJECTED, CLOSED },
   TYPES: { ONSITE_CONSULTATION, ONSITE_TESTS, VIRTUAL_CONSULTATION },
 } = APPOINTMENT;
 
@@ -37,8 +37,20 @@ const appointmentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: [UNAPPROVED, APPROVED, REJECTED],
+      enum: [UNAPPROVED, APPROVED, REJECTED, CLOSED],
       default: UNAPPROVED,
+    },
+    minutesBilled: {
+      type: Number,
+      default: null,
+    },
+    hasBeenBilled: {
+      type: Boolean,
+      default: false,
+    },
+    paymentId: {
+      type: String,
+      default: null,
     },
   },
   {

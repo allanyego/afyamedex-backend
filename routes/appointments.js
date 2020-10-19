@@ -8,7 +8,7 @@ const schema = require("../joi-schemas/appointment");
 const createResponse = require("./helpers/create-response");
 const controller = require("../controllers/appointments");
 const CustomError = require("../util/custom-error");
-const { USER } = require("../util/constants");
+const { USER, APPOINTMENT } = require("../util/constants");
 const isClientError = require("../util/is-client-error");
 
 router.get("/:userId", auth, async function (req, res, next) {
@@ -31,20 +31,33 @@ router.get("/:userId", auth, async function (req, res, next) {
   }
 });
 
-router.post("/checkout/:appointmentId", auth, async (req, res, next) => {
-  if (!req.body.duration) {
-    return res.status(400).json(
-      createResponse({
-        error: "'duration' is a required field",
-      })
-    );
-  }
-
+router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
   try {
-    let duration = req.body.duration;
-    duration = duration < 10 ? 10 : duration;
+    const appointment = await controller.findById(req.params.appointmentId);
+
+    if (!appointment) {
+      return res.json(
+        createResponse({
+          error: "no matching appointment found",
+        })
+      );
+    }
+
+    if (
+      appointment.status !== APPOINTMENT.STATUSES.CLOSED ||
+      appointment.hasBeenBilled
+    ) {
+      return res.json(
+        createResponse({
+          error: "appointment not in eligible for checkout",
+        })
+      );
+    }
+
+    const amount =
+      Number(appointment.minutesBilled) * Number(process.env.CHARGE_RATE);
     const intent = await stripe.paymentIntents.create({
-      amount: Number(duration) * Number(process.env.CHARGE_RATE),
+      amount: amount,
       currency: "usd",
       metadata: {
         integration_check: "accept_a_payment",
@@ -60,7 +73,6 @@ router.post("/checkout/:appointmentId", auth, async (req, res, next) => {
       })
     );
   } catch (error) {
-    console.log(error);
     next(error);
   }
 });
@@ -119,12 +131,16 @@ router.post("/:professionalId", auth, async function (req, res, next) {
 });
 
 router.put("/:appointmentId", auth, async function (req, res, next) {
+  // A patient tries an operation other than closing appointment
   if (res.locals.userAccountType === USER.ACCOUNT_TYPES.PATIENT) {
-    return res.status(401).json(
-      createResponse({
-        error: "unauthorized",
-      })
-    );
+    const status = req.body.status;
+    if (status && status !== APPOINTMENT.STATUSES.CLOSED) {
+      return res.status(401).json(
+        createResponse({
+          error: "unauthorized operation",
+        })
+      );
+    }
   }
 
   try {
@@ -134,14 +150,6 @@ router.put("/:appointmentId", auth, async function (req, res, next) {
       return res.json(
         createResponse({
           error: "no appointment match found",
-        })
-      );
-    }
-
-    if (String(appointment.professional) !== res.locals.userId) {
-      return res.status(401).json(
-        createResponse({
-          error: "unathorized access",
         })
       );
     }

@@ -20,9 +20,13 @@ function setupIO(io) {
     socket.on("join", (data) => {
       console.log("User subscribing to", data);
 
-      socket.join(data.room).to(data.room).emit("user-joined", {
-        userId: socket.customId,
-      });
+      socket
+        .join(data.room)
+        .to(data.room)
+        .emit("user-joined", {
+          userId: socket.customId,
+          peer: data.peer || false,
+        });
     });
 
     // Keep track of online users
@@ -43,10 +47,11 @@ function setupIO(io) {
     });
 
     // When a user leaves the room for whatever reason
-    socket.on("left-room", ({ room }) => {
+    socket.on("left-room", ({ room, peer }) => {
       socket.leave(room, () => {
         io.to(room).emit("left-room", {
           userId: socket.customId,
+          peer: peer || false,
         });
       });
     });

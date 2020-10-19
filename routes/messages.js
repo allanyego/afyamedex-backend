@@ -7,6 +7,19 @@ const controller = require("../controllers/threads");
 const auth = require("../middleware/auth");
 const isClientError = require("../util/is-client-error");
 
+router.get("/", auth, async function (req, res, next) {
+  try {
+    res.json(
+      createResponse({
+        data: await controller.getPublicThreads(),
+      })
+    );
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
 router.get("/user-threads/:userId", auth, async function (req, res, next) {
   const { userId } = req.params;
 
@@ -49,10 +62,16 @@ router.get("/user-messages", auth, async function (req, res, next) {
 });
 
 router.get("/:threadId", auth, async function (req, res, next) {
+  const q = req.query;
+  console.log("query", q);
+
   try {
     res.json(
       createResponse({
-        data: await controller.get(req.params.threadId, res.locals.userId),
+        data: await controller.get(
+          req.params.threadId,
+          q.public ? null : res.locals.userId
+        ),
       })
     );
   } catch (error) {

@@ -23,6 +23,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/v1", apiRouter);
 
 app.use(function errorHandler(err, req, res, next) {
+  console.log("server eerr", err);
   if (res.headersSent) {
     return next(err);
   }
