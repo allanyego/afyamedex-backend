@@ -63,7 +63,6 @@ router.get("/user-messages", auth, async function (req, res, next) {
 
 router.get("/:threadId", auth, async function (req, res, next) {
   const q = req.query;
-  console.log("query", q);
 
   try {
     res.json(

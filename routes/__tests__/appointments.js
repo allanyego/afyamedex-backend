@@ -75,7 +75,8 @@ describe("/appointments", function () {
         resp = await request
           .put(`${url}/${tempAppointment._id}`)
           .send({
-            status: APPOINTMENT.STATUSES.APPROVED,
+            status: APPOINTMENT.STATUSES.CLOSED,
+            minutesBilled: 35,
           })
           .set({
             Authorization: `Bearer ${resp.body.data.token}`,
@@ -83,6 +84,39 @@ describe("/appointments", function () {
 
         expect(resp.status).toBe(200);
         expect(resp.body.status).toBe("success");
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  describe("GET /checkout/:appointmentId", function () {
+    it("should fail if payer is not the patient", async (done) => {
+      try {
+        const resp = await request
+          .get(`${url}/checkout/${tempAppointment._id}`)
+          .set({
+            Authorization: `Bearer ${tempDoc.token}`,
+          });
+
+        expect(resp.status).toBe(401);
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+
+    it("should succeed if payer is the patient", async (done) => {
+      try {
+        const resp = await request
+          .get(`${url}/checkout/${tempAppointment._id}`)
+          .set({
+            Authorization: `Bearer ${tempPatient.token}`,
+          });
+
+        expect(resp.status).toBe(200);
+        expect(resp.body.data.clientSecret).toBeDefined();
         done();
       } catch (error) {
         done(error);

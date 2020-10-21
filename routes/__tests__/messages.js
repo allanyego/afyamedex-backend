@@ -91,7 +91,7 @@ describe("/messages", function () {
   describe("GET /", function () {
     it("should return a list of public threads", async (done) => {
       try {
-        const resp = await request.get(`${url}/${testThread._id}`).set({
+        const resp = await request.get(url).set({
           Authorization: `Bearer ${tempPatient.token}`,
         });
 
