@@ -9,6 +9,7 @@ const controller = require("../controllers/users");
 const sign = require("./helpers/sign");
 const auth = require("../middleware/auth");
 const isClientError = require("../util/is-client-error");
+const { USER } = require("../util/constants");
 
 router.get("/", async function (req, res, next) {
   const { username, patient } = req.query;

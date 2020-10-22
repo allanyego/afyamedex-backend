@@ -14,7 +14,7 @@ const editSchema = Joi.object({
   email: Joi.string(),
   bio: Joi.string(),
   accountType: Joi.string(),
-  experience: Joi.string(),
+  experience: Joi.string().allow(""),
   contact: Joi.object({
     phone: Joi.string(),
     email: Joi.string().email(),

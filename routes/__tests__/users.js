@@ -1,7 +1,7 @@
 const supertest = require("supertest");
 
 const app = require("../../app");
-const Teacher = require("../../models/user");
+const User = require("../../models/user");
 const { USER } = require("../../util/constants");
 
 const request = supertest(app);
@@ -9,7 +9,7 @@ const request = supertest(app);
 const BASE_URL = "/api/v1";
 
 afterAll(async function () {
-  await Teacher.deleteMany({
+  await User.deleteMany({
     username: {
       $not: { $regex: "^test_" },
     },
@@ -64,9 +64,6 @@ describe("/users", function () {
   describe("GET /:userId", function () {
     it("should return user by id", async (done) => {
       try {
-        const date = new Date();
-        date.setFullYear(1995);
-
         const resp = await request.get(`${BASE_URL}/users/${tempUser._id}`);
 
         expect(resp.status).toBe(200);
