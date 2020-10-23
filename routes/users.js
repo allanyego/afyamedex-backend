@@ -9,6 +9,7 @@ const controller = require("../controllers/users");
 const sign = require("./helpers/sign");
 const auth = require("../middleware/auth");
 const isClientError = require("../util/is-client-error");
+const { passwordResetSchema } = require("../joi-schemas/user");
 
 router.get("/", async function (req, res, next) {
   const { username, patient } = req.query;
@@ -57,6 +58,66 @@ router.post("/signin", async function (req, res, next) {
   }
 });
 
+// Reset password
+router.post("/reset-password", async (req, res, next) => {
+  if (!req.body.username) {
+    return res.status(400).json(
+      createResponse({
+        error: "username is required",
+      })
+    );
+  }
+
+  try {
+    res.json(
+      createResponse({
+        data: await controller.resetPassword(req.body.username),
+      })
+    );
+  } catch (error) {
+    if (isClientError(error)) {
+      return res.json(
+        createResponse({
+          error: error.message,
+        })
+      );
+    }
+
+    next(error);
+  }
+});
+
+// Verify password reset
+router.post("/confirm-reset", async (req, res, next) => {
+  try {
+    await passwordResetSchema.validateAsync(req.body);
+  } catch (error) {
+    return res.status(400).json(
+      createResponse({
+        error: error.message,
+      })
+    );
+  }
+
+  try {
+    res.json(
+      createResponse({
+        data: await controller.confirmReset(req.body),
+      })
+    );
+  } catch (error) {
+    if (isClientError(error)) {
+      return res.json(
+        createResponse({
+          error: error.message,
+        })
+      );
+    }
+
+    next(error);
+  }
+});
+
 router.post("/", async function (req, res, next) {
   try {
     await schema.newSchema.validateAsync(req.body);
@@ -68,7 +129,10 @@ router.post("/", async function (req, res, next) {
     );
   }
 
-  const hashedPassword = await bcrypt.hash(req.body.password, 3);
+  const hashedPassword = await bcrypt.hash(
+    req.body.password,
+    Number(process.env.SALT_ROUNDS)
+  );
 
   try {
     let newUser = await controller.add({

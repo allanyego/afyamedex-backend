@@ -61,6 +61,14 @@ const userSchema = new mongoose.Schema(
       ],
       default: [],
     },
+    resetCode: {
+      type: Number,
+      default: null,
+    },
+    resetCodeExpiration: {
+      type: Number,
+      default: null,
+    },
     reviews: {
       type: [
         new mongoose.Schema({

@@ -31,14 +31,14 @@ const editSchema = Joi.object({
   conditions: Joi.array().items(Joi.string()),
 });
 
-const reviewSchema = Joi.object({
-  user: Joi.string().required(),
-  comment: Joi.string().required(),
-  rating: Joi.string().required(),
+const passwordResetSchema = Joi.object({
+  resetCode: Joi.number().required(),
+  newPassword: Joi.string().required(),
+  username: Joi.string().required(),
 });
 
 module.exports = {
   newSchema,
   editSchema,
-  reviewSchema,
+  passwordResetSchema,
 };

@@ -20,7 +20,10 @@ const USER = {
   },
 };
 
+const TEST_RESET_CODE = "345656";
+
 module.exports = {
   APPOINTMENT,
   USER,
+  TEST_RESET_CODE,
 };

@@ -1,19 +1,28 @@
 const supertest = require("supertest");
+const bcrypt = require("bcrypt");
 
 const app = require("../../app");
-const Teacher = require("../../models/user");
-const { USER } = require("../../util/constants");
+const User = require("../../models/user");
+const { USER, TEST_RESET_CODE } = require("../../util/constants");
 
 const request = supertest(app);
 
 const BASE_URL = "/api/v1";
 
 afterAll(async function () {
-  await Teacher.deleteMany({
+  await User.deleteMany({
     username: {
       $not: { $regex: "^test_" },
     },
   });
+  await User.updateOne(
+    {
+      username: "test_yego",
+    },
+    {
+      password: await bcrypt.hash("dot1love", Number(process.env.SALT_ROUNDS)),
+    }
+  );
 });
 
 describe("/users", function () {
@@ -27,6 +36,44 @@ describe("/users", function () {
 
         expect(resp.status).toBe(200);
         expect(resp.body.data.token).toBeDefined();
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  describe("POST /reset-password", function () {
+    it("should send code to user email", async (done) => {
+      try {
+        const resp = await request
+          .post(`${BASE_URL}/users/reset-password`)
+          .send({
+            username: "devyego@gmail.com",
+          });
+
+        expect(resp.status).toBe(200);
+        expect(resp.body.status).toBe("success");
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  describe("POST /confirm-reset", function () {
+    it("should send code to user email", async (done) => {
+      try {
+        const resp = await request
+          .post(`${BASE_URL}/users/confirm-reset`)
+          .send({
+            username: "test_yego",
+            newPassword: "dot3love",
+            resetCode: TEST_RESET_CODE,
+          });
+
+        expect(resp.status).toBe(200);
+        expect(resp.body.status).toBe("success");
         done();
       } catch (error) {
         done(error);
@@ -119,7 +166,9 @@ describe("/users", function () {
   describe("GET ?username=username", function () {
     it("should return patient users matching username expression", async (done) => {
       try {
-        const resp = await request.get(`${BASE_URL}/users?username=test_&patient=true`);
+        const resp = await request.get(
+          `${BASE_URL}/users?username=test_&patient=true`
+        );
 
         expect(resp.status).toBe(200);
         expect(resp.body.data.length).toBe(1);

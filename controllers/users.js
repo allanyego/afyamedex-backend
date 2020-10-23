@@ -1,9 +1,11 @@
 const bcrypt = require("bcrypt");
-
+const tokenGen = require("generate-sms-verification-code");
 const User = require("../models/user");
-const { USER } = require("../util/constants");
+const { USER, TEST_RESET_CODE } = require("../util/constants");
 const CustomError = require("../util/custom-error");
 const sign = require("../routes/helpers/sign");
+const isProduction = require("../util/is-production");
+const mailer = require("../util/mailer");
 
 async function add(data) {
   if (
@@ -74,6 +76,70 @@ async function authenticate(data) {
   }
 }
 
+async function resetPassword(username) {
+  const user = await User.findOne({
+    $or: [{ username }, { email: username }],
+  });
+
+  if (!user) {
+    throw new CustomError("no user found");
+  }
+
+  // Check if user already requested reset
+  if (user.resetCodeExpiration && user.resetCodeExpiration < Date.now()) {
+    throw new CustomError("present_active_request");
+  }
+
+  // Generate reset code
+  let code;
+  if (!isProduction()) {
+    code = TEST_RESET_CODE;
+  } else {
+    code = tokenGen(6, { type: "number" });
+  }
+  // Send email
+  try {
+    if (isProduction()) {
+      await mailer.sendMail({
+        to: user.email,
+        from: "Afyamedex",
+        subject: "Password reset",
+        text: `You password reset code is ${code}. This expires in 48 hours.`,
+      });
+    }
+  } catch (error) {
+    console.log("mail error", error);
+    throw new CustomError("There was an error sending a reset email");
+  }
+  // Save to db
+  user.resetCode = code;
+  user.resetCodeExpiration = Date.now() + process.env.RESET_EXPIRATION_DURATION;
+  await user.save();
+
+  return "reset request success";
+}
+
+async function confirmReset({ resetCode, newPassword, username }) {
+  // Find user with code
+  const user = await User.findOne({
+    resetCode,
+    $or: [{ username }, { email: username }],
+  });
+  // Check if expired and possibly remove code
+  if (user.resetCodeExpiration <= Date.now()) {
+    user.resetCode = user.resetCodeExpiration = null;
+    await user.save();
+    throw new CustomError("code expired");
+  }
+  // Hash and set new password for user
+  user.password = await bcrypt.hash(
+    newPassword,
+    Number(process.env.SALT_ROUNDS)
+  );
+  await user.save();
+  return "password changed successfully";
+}
+
 module.exports = {
   add,
   get,
@@ -81,4 +147,6 @@ module.exports = {
   update,
   findById,
   authenticate,
+  resetPassword,
+  confirmReset,
 };

@@ -48,6 +48,10 @@ const appointmentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    hasReview: {
+      type: Boolean,
+      default: false,
+    },
     paymentId: {
       type: String,
       default: null,
