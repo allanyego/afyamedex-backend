@@ -113,7 +113,8 @@ async function resetPassword(username) {
   }
   // Save to db
   user.resetCode = code;
-  user.resetCodeExpiration = Date.now() + process.env.RESET_EXPIRATION_DURATION;
+  user.resetCodeExpiration =
+    Date.now() + Number(process.env.RESET_EXPIRATION_DURATION);
   await user.save();
 
   return "reset request success";
