@@ -14,7 +14,7 @@ async function add(data) {
       { email: data.email },
     ])
   ) {
-    throw new Error("Possible duplicate.");
+    throw new CustomError("Possible duplicate.");
   }
 
   return await User.create(data);

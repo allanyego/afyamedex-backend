@@ -43,6 +43,14 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
       );
     }
 
+    if (String(appointment.patient) !== res.locals.userId) {
+      return res.status(401).json(
+        createResponse({
+          error: "unathorized operation",
+        })
+      );
+    }
+
     if (
       appointment.status !== APPOINTMENT.STATUSES.CLOSED ||
       appointment.hasBeenBilled
@@ -56,13 +64,30 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
 
     const amount =
       Number(appointment.minutesBilled) * Number(process.env.CHARGE_RATE);
-    const intent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: "usd",
-      metadata: {
-        integration_check: "accept_a_payment",
-      },
-    });
+    let intent;
+
+    try {
+      intent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        metadata: {
+          integration_check: "accept_a_payment",
+        },
+      });
+    } catch (error) {
+      if (error.type === "card_error") {
+        return res.json(
+          createResponse({
+            error: error.message,
+          })
+        );
+      }
+      return res.json(
+        createResponse({
+          error: "there was an error processing the payment",
+        })
+      );
+    }
 
     res.json(
       createResponse({

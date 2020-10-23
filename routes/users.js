@@ -9,7 +9,11 @@ const controller = require("../controllers/users");
 const sign = require("./helpers/sign");
 const auth = require("../middleware/auth");
 const isClientError = require("../util/is-client-error");
+<<<<<<< HEAD
 const { passwordResetSchema } = require("../joi-schemas/user");
+=======
+const { USER } = require("../util/constants");
+>>>>>>> 0e446a83d85ce918a3b45e05662c24addbf8e5d8
 
 router.get("/", async function (req, res, next) {
   const { username, patient } = req.query;

@@ -111,9 +111,6 @@ describe("/users", function () {
   describe("GET /:userId", function () {
     it("should return user by id", async (done) => {
       try {
-        const date = new Date();
-        date.setFullYear(1995);
-
         const resp = await request.get(`${BASE_URL}/users/${tempUser._id}`);
 
         expect(resp.status).toBe(200);
