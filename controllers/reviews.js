@@ -1,7 +1,5 @@
 const {
-  Schema: {
-    Types: { ObjectId },
-  },
+  Types: { ObjectId },
 } = require("mongoose");
 const Review = require("../models/review");
 const User = require("../models/user");
@@ -51,8 +49,8 @@ async function get({ forUser, rating = undefined, appointment = undefined }) {
 
   if (rating) {
     return await Review.aggregate([
-      { $match: { _id: ObjectId(forUser) } },
-      { $group: { rating: { $avg: "rating" } } },
+      { $match: { forUser: ObjectId(forUser) } },
+      { $group: { _id: null, rating: { $avg: "$rating" } } },
     ]);
   }
 

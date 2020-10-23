@@ -137,6 +137,8 @@ async function confirmReset({ resetCode, newPassword, username }) {
     newPassword,
     Number(process.env.SALT_ROUNDS)
   );
+  user.resetCode = null;
+  user.resetCodeExpiration = null;
   await user.save();
   return "password changed successfully";
 }
