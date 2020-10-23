@@ -127,7 +127,8 @@ async function confirmReset({ resetCode, newPassword, username }) {
   });
   // Check if expired and possibly remove code
   if (user.resetCodeExpiration <= Date.now()) {
-    user.resetCode = user.resetCodeExpiration = null;
+    user.resetCode = null;
+    user.resetCodeExpiration = null;
     await user.save();
     throw new CustomError("code expired");
   }

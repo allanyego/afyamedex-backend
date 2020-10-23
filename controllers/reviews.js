@@ -20,31 +20,34 @@ async function add({ appointment, byUser, rating, feedback }) {
   }
 
   if (
-      _appointment.status !== APPOINTMENT.STATUSES.CLOSED ||
+    _appointment.status !== APPOINTMENT.STATUSES.CLOSED ||
     !_appointment.hasBeenBilled
   ) {
-      throw new CustomError("not eligible for a review");
+    throw new CustomError("not eligible for a review");
   }
 
   if (String(_appointment.patient) !== byUser) {
-      throw new CustomError("unauthorized");
+    throw new CustomError("unauthorized");
   }
 
-  return await Review.create({
+  const newReview = await Review.create({
     forUser: _appointment.professional,
     appointment,
     byUser,
     rating,
     feedback,
   });
+  _appointment.hasReview = true;
+  await _appointment.save();
+  return newReview;
 }
 
 async function get({ forUser, rating = undefined, appointment = undefined }) {
-    if (appointment) {
-        return await Review.findOne({
-            appointment
-        });
-    }
+  if (appointment) {
+    return await Review.findOne({
+      appointment,
+    });
+  }
 
   if (rating) {
     return await Review.aggregate([

@@ -18,8 +18,6 @@ function setupIO(io) {
 
     // Join a socket to a room
     socket.on("join", (data) => {
-      console.log("User subscribing to", data);
-
       socket
         .join(data.room)
         .to(data.room)
@@ -27,6 +25,18 @@ function setupIO(io) {
           userId: socket.customId,
           peer: data.peer || false,
         });
+
+      function emitToRoom(event, room) {
+        socket.to(room).emit(event, {
+          userId: socket.customId,
+        });
+      }
+
+      // Handle media track toggles
+      socket.on("video-off", () => emitToRoom("video-off", data.room));
+      socket.on("video-on", () => emitToRoom("video-on", data.room));
+      socket.on("audio-off", () => emitToRoom("audio-off", data.room));
+      socket.on("audio-on", () => emitToRoom("audio-on", data.room));
     });
 
     // Keep track of online users
