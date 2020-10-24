@@ -15,12 +15,17 @@ afterAll(async function () {
       $not: { $regex: "^test_" },
     },
   });
-  await User.updateOne(
+  await User.updateMany(
     {
-      username: "test_yego",
+      username: {
+        $regex: "^test_",
+      },
     },
     {
-      password: await bcrypt.hash("dot1love", Number(process.env.SALT_ROUNDS)),
+      password: await bcrypt.hash(
+        process.env.TEST_USER_PASSWORD,
+        Number(process.env.SALT_ROUNDS)
+      ),
     }
   );
 });
