@@ -69,26 +69,6 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
-    reviews: {
-      type: [
-        new mongoose.Schema({
-          user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-          },
-          comment: {
-            type: String,
-            required: true,
-          },
-          rating: {
-            type: Number,
-            required: true,
-          },
-        }),
-      ],
-      default: [],
-    },
   },
   {
     timestamps: true,

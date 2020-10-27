@@ -1,3 +1,4 @@
+const fs = require("fs");
 const Appointment = require("../models/appointment");
 const CustomError = require("../util/custom-error");
 
@@ -35,6 +36,36 @@ async function get(_id) {
 }
 
 async function update(_id, data) {
+  console.log("updating appointment", data);
+  // Check it has a test file
+  if (data.file) {
+    const fileName = _id;
+    await new Promise((res, rej) => {
+      fs.writeFile("/uploads/" + _id, data.file, (err) => {
+        if (err) {
+          rej(err);
+        }
+
+        res();
+      });
+    });
+
+    await Appointment.updateOne(
+      { _id },
+      {
+        amount: data.amount,
+        status: data.status,
+        testSummary: data.testSummary,
+        testFile: fileName,
+        minutesBilled: 0,
+      }
+    );
+
+    return {
+      testFile: fileName,
+    };
+  }
+
   return await Appointment.updateOne({ _id }, data);
 }
 

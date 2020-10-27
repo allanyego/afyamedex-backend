@@ -1,5 +1,6 @@
 var express = require("express");
 const mongoose = require("mongoose");
+const upload = require("multer")({ dest: "uploads/" });
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 var router = express.Router();
 
@@ -62,9 +63,17 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
       );
     }
 
-    const amount =
-      Number(appointment.minutesBilled) * Number(process.env.CHARGE_RATE);
+    let amount;
     let intent;
+
+    if (appointment.type === APPOINTMENT.TYPES.ONSITE_TESTS) {
+      amount = appointment.amount;
+    } else {
+      amount =
+        Number(appointment.minutesBilled) * Number(process.env.CHARGE_RATE);
+    }
+
+    console.log("checking out", amount);
 
     try {
       intent = await stripe.paymentIntents.create({
@@ -75,6 +84,7 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
         },
       });
     } catch (error) {
+      console.log("err", error);
       if (error.type === "card_error") {
         return res.json(
           createResponse({
@@ -155,7 +165,11 @@ router.post("/:professionalId", auth, async function (req, res, next) {
   }
 });
 
-router.put("/:appointmentId", auth, async function (req, res, next) {
+router.put("/:appointmentId", auth, upload.single("testFile"), async function (
+  req,
+  res,
+  next
+) {
   // A patient tries an operation other than closing appointment
   if (res.locals.userAccountType === USER.ACCOUNT_TYPES.PATIENT) {
     const status = req.body.status;

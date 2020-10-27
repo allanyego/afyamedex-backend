@@ -47,7 +47,20 @@ async function findByUsername(username) {
 }
 
 async function update(_id, data) {
-  return await User.updateOne({ _id }, data);
+  await User.updateOne({ _id }, data);
+  // generate a new token with new account details
+  const res = {
+    updated: true,
+  };
+
+  if (data.accountType) {
+    res.token = sign({
+      _id,
+      accountType: data.accountType,
+    });
+  }
+
+  return res;
 }
 
 async function findById(_id) {

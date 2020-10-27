@@ -41,8 +41,8 @@ describe("/appointments", function () {
             date,
             time: new Date(date.setHours(date.getHours() + 5)),
             patient: tempPatient._id,
-            type: APPOINTMENT.TYPES.VIRTUAL_CONSULTATION,
-            subject: "initial meet",
+            type: APPOINTMENT.TYPES.ONSITE_TESTS,
+            subject: "initial tests",
           })
           .set({
             Authorization: `Bearer ${tempPatient.token}`,
@@ -74,16 +74,17 @@ describe("/appointments", function () {
 
         resp = await request
           .put(`${url}/${tempAppointment._id}`)
-          .send({
-            status: APPOINTMENT.STATUSES.CLOSED,
-            minutesBilled: 35,
-          })
+          .field("status", APPOINTMENT.STATUSES.CLOSED)
+          .field("amount", 150)
+          .field("testSummary", "you seem to be ok")
+          .attach("testFile", "/appointment.js")
           .set({
             Authorization: `Bearer ${resp.body.data.token}`,
           });
 
         expect(resp.status).toBe(200);
         expect(resp.body.status).toBe("success");
+        expect(resp.body.data.testFile).toBeDefined();
         done();
       } catch (error) {
         done(error);
