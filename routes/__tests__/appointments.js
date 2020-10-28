@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const supertest = require("supertest");
 
 const app = require("../../app");
@@ -8,8 +10,17 @@ const request = supertest(app);
 
 const BASE_URL = "/api/v1";
 
+let testFile;
+
 afterAll(async function () {
   await Appointment.deleteMany({});
+  if (testFile) {
+    fs.unlink(path.join(__dirname, "..", "..", "uploads", testFile), (err) => {
+      if (err) {
+        console.log("error deleting file", testFile, err);
+      }
+    });
+  }
 });
 
 describe("/appointments", function () {
@@ -20,7 +31,7 @@ describe("/appointments", function () {
   let tempPatient;
   let tempAppointment;
 
-  describe("POST /:professionalId", function () {
+  describe("POST /:professionaId", function () {
     it("should return newly created appointment", async (done) => {
       try {
         let resp = await request.post(`${BASE_URL}/users/signin`).send({
@@ -55,7 +66,7 @@ describe("/appointments", function () {
       } catch (error) {
         done(error);
       }
-    });
+    }, 10000);
   });
 
   describe("PUT /:appointmentId", function () {
@@ -74,17 +85,18 @@ describe("/appointments", function () {
 
         resp = await request
           .put(`${url}/${tempAppointment._id}`)
-          .field("status", APPOINTMENT.STATUSES.CLOSED)
-          .field("amount", 150)
-          .field("testSummary", "you seem to be ok")
-          .attach("testFile", "/appointment.js")
           .set({
-            Authorization: `Bearer ${resp.body.data.token}`,
-          });
+            Authorization: `Bearer ${tempDoc.token}`,
+          })
+          .field("status", APPOINTMENT.STATUSES.CLOSED)
+          .field("amount", 50)
+          .field("testSummary", "you seem to be ok")
+          .attach("testFile", __dirname + "/testdoc.docx");
 
         expect(resp.status).toBe(200);
         expect(resp.body.status).toBe("success");
         expect(resp.body.data.testFile).toBeDefined();
+        testFile = resp.body.data.testFile;
         done();
       } catch (error) {
         done(error);

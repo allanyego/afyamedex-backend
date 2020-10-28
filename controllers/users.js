@@ -79,6 +79,15 @@ async function authenticate(data) {
   }
 
   if (await bcrypt.compare(password, user.password)) {
+    // Check if user already requested reset
+    // For now, just remove the reset code
+    // Later implement notification logic
+    if (user.resetCodeExpiration && user.resetCodeExpiration < Date.now()) {
+      user.resetCode = null;
+      user.resetCodeExpiration = null;
+      await user.save();
+    }
+
     user = user.toJSON();
     delete user.password;
     // Append a token to the user

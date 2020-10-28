@@ -22,8 +22,11 @@ const USER = {
 
 const TEST_RESET_CODE = "345656";
 
+const ALLOWED_FILE_TYPES = ["doc", "docx", "pdf"];
+
 module.exports = {
   APPOINTMENT,
   USER,
   TEST_RESET_CODE,
+  ALLOWED_FILE_TYPES,
 };

@@ -1,5 +1,7 @@
 const fs = require("fs");
+const path = require("path");
 const Appointment = require("../models/appointment");
+const { ALLOWED_FILE_TYPES } = require("../util/constants");
 const CustomError = require("../util/custom-error");
 
 async function add(data) {
@@ -36,12 +38,19 @@ async function get(_id) {
 }
 
 async function update(_id, data) {
-  console.log("updating appointment", data);
   // Check it has a test file
   if (data.file) {
-    const fileName = _id;
+    const ext = data.file.originalname.split(".").pop();
+    if (!ALLOWED_FILE_TYPES.includes(ext)) {
+      throw new CustomError(
+        "file format should be one of: " + ALLOWED_FILE_TYPES.join(", ")
+      );
+    }
+
+    const fileName = `${_id}.${ext}`;
+    const filePath = path.join(__dirname, "..", "uploads", fileName);
     await new Promise((res, rej) => {
-      fs.writeFile("/uploads/" + _id, data.file, (err) => {
+      fs.writeFile(filePath, data.file.buffer, (err) => {
         if (err) {
           rej(err);
         }

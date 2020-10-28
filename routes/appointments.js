@@ -1,6 +1,8 @@
+const path = require("path");
 var express = require("express");
 const mongoose = require("mongoose");
-const upload = require("multer")({ dest: "uploads/" });
+const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 var router = express.Router();
 
@@ -27,6 +29,14 @@ router.get("/:userId", auth, async function (req, res, next) {
         data: await controller.get(req.params.userId),
       })
     );
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/test-file/:testFile", auth, async function (req, res, next) {
+  try {
+    res.sendFile(path.join(__dirname, "..", "uploads", req.params.testFile));
   } catch (error) {
     next(error);
   }
@@ -73,8 +83,6 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
         Number(appointment.minutesBilled) * Number(process.env.CHARGE_RATE);
     }
 
-    console.log("checking out", amount);
-
     try {
       intent = await stripe.paymentIntents.create({
         amount: amount,
@@ -84,7 +92,6 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
         },
       });
     } catch (error) {
-      console.log("err", error);
       if (error.type === "card_error") {
         return res.json(
           createResponse({
@@ -195,7 +202,10 @@ router.put("/:appointmentId", auth, upload.single("testFile"), async function (
 
     res.json(
       createResponse({
-        data: await controller.update(appointmentId, req.body),
+        data: await controller.update(appointmentId, {
+          ...req.body,
+          file: req.file || null,
+        }),
       })
     );
   } catch (error) {
