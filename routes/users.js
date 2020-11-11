@@ -22,7 +22,7 @@ router.get("/", auth, async function (req, res, next) {
       createResponse({
         data: await controller.find({
           username,
-          patient: patient ?? false,
+          patient: !!patient || false,
           includeDisabled: isAdmin,
           unset: isAdmin && unset,
         }),
