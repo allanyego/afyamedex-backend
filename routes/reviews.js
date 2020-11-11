@@ -11,18 +11,29 @@ const { USER } = require("../util/constants");
 
 router.get("/user/:userId?", auth, async (req, res, next) => {
   const rating = req.query.rating;
-    const user = req.params.userId;
+  const user = req.params.userId;
+
+  const opts = {};
+  if (user && !rating) {
+    opts.forUser = user;
+    opts.byUser = res.locals.userId;
+  } else if (user && rating) {
+    opts.forUser = user;
+  } else {
+    opts.forUser = res.locals.userId;
+  }
+
   try {
     res.json(
       createResponse({
         data: await controller.get({
-          forUser: user || res.locals.userId,
+          ...opts,
           rating,
         }),
       })
     );
   } catch (error) {
-      next(error);
+    next(error);
   }
 });
 
@@ -36,7 +47,7 @@ router.get("/:appointmentId", auth, async (req, res, next) => {
       })
     );
   } catch (error) {
-      next(error);
+    next(error);
   }
 });
 
@@ -62,20 +73,22 @@ router.post("/:appointmentId", auth, async function (req, res, next) {
   try {
     res.status(201).json(
       createResponse({
-        data: await controller.add({ 
-            appointment: req.params.appointmentId, 
-            byUser: res.locals.userId,
-            ...req.body,
+        data: await controller.add({
+          appointment: req.params.appointmentId,
+          byUser: res.locals.userId,
+          ...req.body,
         }),
       })
     );
   } catch (error) {
     if (isClientError(error)) {
-        if (error.message === "unauthorized") {
-            return res.status(401).json(createResponse({
-                error: "unauthorized operation"
-            }));
-        }
+      if (error.message === "unauthorized") {
+        return res.status(401).json(
+          createResponse({
+            error: "unauthorized operation",
+          })
+        );
+      }
       return res.json(
         createResponse({
           error: error.message,
@@ -86,6 +99,5 @@ router.post("/:appointmentId", auth, async function (req, res, next) {
     next(error);
   }
 });
-
 
 module.exports = router;

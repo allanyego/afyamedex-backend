@@ -27,7 +27,7 @@ describe("/messages", function () {
   let testGroupThread = {
     _id: "5f8c89d0a2acfa99c3b3e077",
   };
-  let tempPatient, testThread;
+  let tempPatient, testMessage;
 
   describe("POST /", function () {
     it("should return newly created thread", async (done) => {
@@ -55,8 +55,9 @@ describe("/messages", function () {
           });
 
         expect(resp.status).toBe(201);
-        expect(resp.body.data.lastMessage).toBeDefined();
-        testThread = resp.body.data;
+        expect(resp.body.status).toBe("success");
+        expect(resp.body.data._id).toBeDefined();
+        testMessage = resp.body.data;
         done();
       } catch (error) {
         done(error);
@@ -79,8 +80,9 @@ describe("/messages", function () {
           });
 
         expect(resp.status).toBe(201);
-        expect(resp.body.data.lastMessage).toBeDefined();
-        testThread = resp.body.data;
+        expect(resp.body.status).toBe("success");
+        expect(resp.body.data._id).toBeDefined();
+        testMessage = resp.body.data;
         done();
       } catch (error) {
         done(error);
@@ -105,9 +107,9 @@ describe("/messages", function () {
   });
 
   describe("GET /:threadId", function () {
-    it("should return a list of user messages", async (done) => {
+    it("should return a list of thread messages", async (done) => {
       try {
-        const resp = await request.get(`${url}/${testThread._id}`).set({
+        const resp = await request.get(`${url}/${testMessage.thread}`).set({
           Authorization: `Bearer ${tempPatient.token}`,
         });
 

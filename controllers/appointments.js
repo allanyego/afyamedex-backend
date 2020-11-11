@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const Appointment = require("../models/appointment");
 const { ALLOWED_FILE_TYPES } = require("../util/constants");
-const CustomError = require("../util/custom-error");
+const throwError = require("./helpers/throw-error");
 
 async function add(data) {
   if (
@@ -12,7 +12,7 @@ async function add(data) {
       professional: data.professional,
     })
   ) {
-    throw new CustomError("occupied");
+    throwError("Selected time slot is occupied.");
   }
   return await Appointment.create(data);
 }
@@ -42,7 +42,7 @@ async function update(_id, data) {
   if (data.file) {
     const ext = data.file.originalname.split(".").pop();
     if (!ALLOWED_FILE_TYPES.includes(ext)) {
-      throw new CustomError(
+      throwError(
         "file format should be one of: " + ALLOWED_FILE_TYPES.join(", ")
       );
     }

@@ -1,25 +1,49 @@
 const Thread = require("../models/thread");
 const Message = require("../models/message");
 const CustomError = require("../util/custom-error");
+const throwError = require("./helpers/throw-error");
 
-async function add(data) {
+async function addMessage(data) {
   let thread, lastMessage;
 
+  // Client provided thread id
   if (data.thread) {
     thread = await Thread.findById(data.thread);
     if (!thread) {
-      throw new CustomError("no thread by that identifier found");
+      throwError("no thread by that identifier found");
     }
 
     lastMessage = await Message.create(data);
+    if (thread.name) {
+      // Is a public thread
+      return lastMessage;
+    }
     thread.lastMessage = lastMessage._id;
 
     await thread.save();
-    return await Thread.findById(thread._id).populate("lastMessage");
+    return lastMessage;
   }
 
+  // Check if participants already have a thread
+  thread = await Thread.findOne({
+    participants: {
+      $all: [data.sender, data.recipient],
+    },
+  });
+
+  if (thread) {
+    lastMessage = await Message.create({
+      ...data,
+      thread: thread._id,
+    });
+    thread.lastMessage = lastMessage._id;
+    await thread.save();
+    return lastMessage;
+  }
+
+  // Completely new thread between users
   thread = await Thread.create({
-    participants: data.recipient ? [data.sender, data.recipient] : null,
+    participants: [data.sender, data.recipient],
   });
 
   lastMessage = await Message.create({
@@ -30,7 +54,16 @@ async function add(data) {
   thread.lastMessage = lastMessage._id;
   await thread.save();
 
-  return await Thread.findById(thread._id).populate("lastMessage");
+  return lastMessage;
+}
+
+async function addPublicThread(data) {
+  data.name = data.name.toLowerCase();
+  if (await Thread.findOne({ name: data.name })) {
+    throwError("thread by name exists");
+  }
+
+  return await Thread.create(data);
 }
 
 const pop = "_id fullName";
@@ -50,7 +83,7 @@ async function get(thread, userId) {
 async function getUserThreads(userId) {
   return await Thread.find({
     participants: {
-      $all: [userId],
+      $in: [userId],
     },
   })
     .populate("lastMessage", "body createdAt")
@@ -70,8 +103,8 @@ async function getUserMessages(userA, userB) {
 
 async function getPublicThreads() {
   return await Thread.find({
-    participants: {
-      $eq: null,
+    name: {
+      $ne: null,
     },
   }).populate("lastMessage");
 }
@@ -83,7 +116,8 @@ async function getPublicThreadMessages(thread) {
 }
 
 module.exports = {
-  add,
+  addMessage,
+  addPublicThread,
   get,
   getUserThreads,
   getUserMessages,

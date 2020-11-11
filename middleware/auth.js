@@ -29,6 +29,13 @@ const auth = (req, res, next) => {
       );
     }
   } catch (e) {
+    if (e.name === "JsonWebTokenError") {
+      return res.status(401).json(
+        createResponse({
+          error: e.message,
+        })
+      );
+    }
     next(e);
   }
 };

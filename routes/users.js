@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 var router = express.Router();
 
 const schema = require("../joi-schemas/user");
+const adminSchema = require("../joi-schemas/admin");
 const createResponse = require("./helpers/create-response");
 const controller = require("../controllers/users");
 const sign = require("./helpers/sign");
@@ -12,15 +13,18 @@ const isClientError = require("../util/is-client-error");
 const { passwordResetSchema } = require("../joi-schemas/user");
 const { USER } = require("../util/constants");
 
-router.get("/", async function (req, res, next) {
-  const { username, patient } = req.query;
+router.get("/", auth, async function (req, res, next) {
+  const { username, patient, unset } = req.query;
+  const isAdmin = res.locals.userAccountType === USER.ACCOUNT_TYPES.ADMIN;
 
   try {
     res.json(
       createResponse({
-        data: await controller.get({
+        data: await controller.find({
           username,
-          patient,
+          patient: patient ?? false,
+          includeDisabled: isAdmin,
+          unset: isAdmin && unset,
         }),
       })
     );
@@ -136,18 +140,12 @@ router.post("/", async function (req, res, next) {
   );
 
   try {
-    let newUser = await controller.add({
-      ...req.body,
-      password: hashedPassword,
-    });
-
-    newUser = newUser.toJSON();
-    delete newUser.password;
-    newUser.token = sign(newUser);
-
     res.status(201).json(
       createResponse({
-        data: newUser,
+        data: await controller.create({
+          ...req.body,
+          password: hashedPassword,
+        }),
       })
     );
   } catch (error) {
@@ -163,38 +161,65 @@ router.post("/", async function (req, res, next) {
   }
 });
 
+// Admin invite
+router.post("/invite", auth, async (req, res, next) => {
+  if (res.locals.userAccountType !== USER.ACCOUNT_TYPES.ADMIN) {
+    return res.status(401).json(
+      createResponse({
+        error: "Unathorized operation",
+      })
+    );
+  }
+
+  try {
+    await adminSchema.adminInviteSchema.validateAsync(req.body);
+  } catch (error) {
+    return res.status(400).json(
+      createResponse({
+        error: error.message,
+      })
+    );
+  }
+
+  try {
+    res.json(
+      createResponse({
+        data: await controller.inviteAdmin(req.body.email),
+      })
+    );
+  } catch (error) {
+    if (isClientError(error)) {
+      return res.json(
+        createResponse({
+          error: error.message,
+        })
+      );
+    }
+
+    next(error);
+  }
+});
+
+// Update user details
 router.put("/:userId", auth, async function (req, res, next) {
-  try {
-    await schema.editSchema.validateAsync(req.body);
-  } catch (error) {
-    return res.status(400).json(
+  const { userAccountType, userId } = res.locals;
+  const isAdmin = userAccountType === USER.ACCOUNT_TYPES.ADMIN;
+  const isCurrent = userId === req.params.userId;
+
+  if (!isCurrent && !isAdmin) {
+    return res.status(401).json(
       createResponse({
-        error: error.message,
+        error: "Unauthorized operation.",
       })
     );
   }
 
   try {
-    res.json(
-      createResponse({
-        data: await controller.update(req.params.userId, req.body),
-      })
-    );
-  } catch (error) {
-    if (isClientError(error)) {
-      return res.json(
-        createResponse({
-          error: error.message,
-        })
-      );
+    if (isAdmin && !isCurrent) {
+      await adminSchema.adminEditSchema.validateAsync(req.body);
+    } else {
+      await schema.editSchema.validateAsync(req.body);
     }
-    next(error);
-  }
-});
-
-router.post("/reviews/:userId", auth, async function (req, res, next) {
-  try {
-    await schema.reviewSchema.validateAsync(req.body);
   } catch (error) {
     return res.status(400).json(
       createResponse({
@@ -203,22 +228,10 @@ router.post("/reviews/:userId", auth, async function (req, res, next) {
     );
   }
 
-  const user = await controller.findById(req.params.userId);
-  if (!user) {
-    return res.json(
-      createResponse({
-        error: "No user found by specified id.",
-      })
-    );
-  }
-
-  user.reviews.push(req.body);
-
   try {
-    await user.save();
     res.json(
       createResponse({
-        data: "Review posted.",
+        data: await controller.updateUser(req.params.userId, req.body),
       })
     );
   } catch (error) {

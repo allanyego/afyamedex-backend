@@ -13,11 +13,20 @@ afterAll(async function () {
 
 describe("/conditions", function () {
   const url = `${BASE_URL}/conditions`;
+  let testCondition, testAdmin, testUser;
 
   describe("GET /", function () {
     it("should return list of conditions", async (done) => {
       try {
-        const resp = await request.get(url);
+        let resp = await request.post(`${BASE_URL}/users/signin`).send({
+          username: "tomhanks@gmail.com",
+          password: process.env.TEST_USER_PASSWORD,
+        });
+        testUser = resp.body.data;
+
+        resp = await request.get(url).set({
+          Authorization: `Bearer ${testUser.token}`,
+        });
 
         expect(resp.status).toBe(200);
         expect(resp.body.data.length).toBeDefined();
@@ -28,21 +37,10 @@ describe("/conditions", function () {
     });
   });
 
-  let tempCondition;
-
   describe("POST /", function () {
     it("should return newly created condition", async (done) => {
       try {
-        let resp = await request.post(`${BASE_URL}/users/signin`).send({
-          username: "tomhanks@gmail.com",
-          password: process.env.TEST_USER_PASSWORD,
-        });
-
-        if (!resp.body.data.token) {
-          throw new Error("Authentication failed.");
-        }
-
-        resp = await request
+        const resp = await request
           .post(url)
           .send({
             name: "depression",
@@ -58,12 +56,12 @@ interaction
 meditation`,
           })
           .set({
-            Authorization: `Bearer ${resp.body.data.token}`,
+            Authorization: `Bearer ${testUser.token}`,
           });
 
         expect(resp.status).toBe(201);
         expect(resp.body.data.symptoms).toBeDefined();
-        tempCondition = resp.body.data;
+        testCondition = resp.body.data;
         done();
       } catch (error) {
         done(error);
@@ -74,10 +72,40 @@ meditation`,
   describe("GET /:conditionId", function () {
     it("should return condition by given id", async (done) => {
       try {
-        const resp = await request.get(`${url}/${tempCondition._id}`);
+        const resp = await request.get(`${url}/${testCondition._id}`).set({
+          Authorization: `Bearer ${testUser.token}`,
+        });
 
         expect(resp.status).toBe(200);
         expect(resp.body.data.description).toBeDefined();
+        done();
+      } catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  describe("PUT /:conditionId", function () {
+    it("should disable condition post without error", async (done) => {
+      try {
+        let resp = await request.post(`${BASE_URL}/users/signin`).send({
+          username: "admin@gmail.com",
+          password: process.env.TEST_USER_PASSWORD,
+        });
+
+        testAdmin = resp.body.data;
+
+        resp = await request
+          .put(`${BASE_URL}/conditions/${testCondition._id}`)
+          .send({
+            disabled: true,
+          })
+          .set({
+            Authorization: `Bearer ${testAdmin.token}`,
+          });
+
+        expect(resp.status).toBe(200);
+        expect(resp.body.status).toBe("success");
         done();
       } catch (error) {
         done(error);

@@ -34,6 +34,42 @@ router.get("/:userId", auth, async function (req, res, next) {
   }
 });
 
+router.get("/appointment/:apppointmentId", auth, async function (
+  req,
+  res,
+  next
+) {
+  const _appointment = await controller.findById(req.params.appointmentId);
+
+  if (!_appointment) {
+    return res.json(
+      createResponse({
+        error: "No matching appoinment found.",
+      })
+    );
+  }
+
+  const { patient, professional } = _appointment;
+
+  if (res.locals.userId !== patient || res.locals.userId !== professional) {
+    return res.status(401).json(
+      createResponse({
+        error: "unauthorized access",
+      })
+    );
+  }
+
+  try {
+    res.json(
+      createResponse({
+        data: _appointment,
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/test-file/:testFile", auth, async function (req, res, next) {
   try {
     res.sendFile(path.join(__dirname, "..", "uploads", req.params.testFile));

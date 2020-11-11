@@ -92,7 +92,7 @@ router.post("/", auth, async function (req, res, next) {
   try {
     res.status(201).json(
       createResponse({
-        data: await controller.add(req.body),
+        data: await controller.addMessage(req.body),
       })
     );
   } catch (error) {

@@ -4,28 +4,28 @@ const {
 const Review = require("../models/review");
 const User = require("../models/user");
 const Appointment = require("../models/appointment");
-const CustomError = require("../util/custom-error");
 const { USER, APPOINTMENT } = require("../util/constants");
+const throwError = require("./helpers/throw-error");
 
 async function add({ appointment, byUser, rating, feedback }) {
   if (await Review.findOne({ appointment })) {
-    throw new CustomError("appointment already has a review");
+    throwError("appointment already has a review");
   }
 
   let _appointment = await Appointment.findById(appointment);
   if (!_appointment) {
-    throw new CustomError("no matching appointment found");
+    throwError("no matching appointment found");
   }
 
   if (
     _appointment.status !== APPOINTMENT.STATUSES.CLOSED ||
     !_appointment.hasBeenBilled
   ) {
-    throw new CustomError("not eligible for a review");
+    throwError("not eligible for a review");
   }
 
   if (String(_appointment.patient) !== byUser) {
-    throw new CustomError("unauthorized");
+    throwError("unauthorized");
   }
 
   const newReview = await Review.create({

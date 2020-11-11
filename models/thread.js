@@ -5,13 +5,12 @@ const threadSchema = new mongoose.Schema(
     name: {
       type: String,
       default: null,
+      lowercase: true,
     },
     participants: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        // required: true,
-        default: null,
       },
     ],
     lastMessage: {

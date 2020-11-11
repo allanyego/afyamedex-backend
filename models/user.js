@@ -2,25 +2,29 @@ const mongoose = require("mongoose");
 
 const { USER } = require("../util/constants");
 
-const { PROFESSIONAL, PATIENT, INSTITUTION } = USER.ACCOUNT_TYPES;
+const { ADMIN, PROFESSIONAL, PATIENT, INSTITUTION } = USER.ACCOUNT_TYPES;
 
 const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
       required: true,
+      lowercase: true,
     },
     email: {
       type: String,
       required: true,
+      lowercase: true,
     },
     username: {
       type: String,
       required: true,
+      lowercase: true,
     },
     gender: {
       type: String,
-      enum: ["female", "male"],
+      enum: ["female", "male", ""],
+      default: "",
     },
     birthday: {
       type: Date,
@@ -32,9 +36,13 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-    contact: {
-      phone: String,
-      email: String,
+    phone: {
+      type: String,
+      default: null,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
     },
     password: {
       type: String,
@@ -42,7 +50,7 @@ const userSchema = new mongoose.Schema(
     },
     accountType: {
       type: String,
-      enum: [PROFESSIONAL, PATIENT, INSTITUTION, null],
+      enum: [ADMIN, PROFESSIONAL, PATIENT, INSTITUTION, null],
       default: null,
     },
     experience: Number,
@@ -62,7 +70,7 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
     resetCode: {
-      type: Number,
+      type: String,
       default: null,
     },
     resetCodeExpiration: {

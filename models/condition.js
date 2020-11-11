@@ -5,6 +5,7 @@ const conditionSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      lowercase: true,
     },
     description: {
       type: String,
@@ -17,6 +18,10 @@ const conditionSchema = new mongoose.Schema(
     remedies: {
       type: String,
       required: true,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
   {

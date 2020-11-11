@@ -1,13 +1,24 @@
-const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
 
-const { SMTP_USERNAME: user, SMTP_PASSWORD: pass } = process.env;
+const { SENDGRID_API_KEY } = process.env;
+sgMail.setApiKey(SENDGRID_API_KEY);
 
-const mailer = nodemailer.createTransport({
-  service: "SendGrid",
-  auth: {
-    user,
-    pass,
-  },
-});
+const sendMail = async ({
+  to,
+  from, // Use the email address or domain you verified above
+  subject,
+  text,
+  html = null,
+}) => {
+  return await sgMail.send({
+    to,
+    from,
+    subject,
+    text,
+    html,
+  });
+};
 
-module.exports = mailer;
+module.exports = {
+  sendMail,
+};
