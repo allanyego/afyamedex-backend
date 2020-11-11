@@ -162,7 +162,7 @@ async function inviteAdmin(email) {
 
   await Invite.create({
     email,
-    code: await bcrypt.hash(code, Number(process.env.SALT_ROUNDS)),
+    code: await bcrypt.hash(String(code), Number(process.env.SALT_ROUNDS)),
   });
 
   return "Invite email sent successfully.";
