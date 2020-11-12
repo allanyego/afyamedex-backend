@@ -264,7 +264,10 @@ async function resetPassword(username) {
     throwError("There was an error sending a reset email");
   }
   // Save to db
-  user.resetCode = await bcrypt.hash(code, Number(process.env.SALT_ROUNDS));
+  user.resetCode = await bcrypt.hash(
+    String(code),
+    Number(process.env.SALT_ROUNDS)
+  );
   user.resetCodeExpiration =
     Date.now() + Number(process.env.RESET_EXPIRATION_DURATION);
   await user.save();
