@@ -8,8 +8,10 @@ var app = require("../app");
 var debug = require("debug")("timetable-backend:server");
 var http = require("http");
 const socketIO = require("socket.io");
+const { PeerServer } = require("peer");
 
 const setupIO = require("../util/setup-io");
+const isProduction = require("../util/is-production");
 
 /**
  * Get port from environment and store in Express.
@@ -27,8 +29,21 @@ var server = http.createServer(app);
 /**
  * Initiate socket.io and bind events
  */
-const io = socketIO(server);
+const io = socketIO(server, {
+  pingTimeout: 30000,
+});
 setupIO(io);
+
+/**
+ * Create peer server
+ */
+const peerServer = PeerServer({
+  host: "localhost",
+  debug: !isProduction(),
+  port: isProduction() ? 443 : 9000,
+});
+
+// app.use("/peerjs", peerServer);
 
 /**
  * Listen on provided port, on all network interfaces.

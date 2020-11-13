@@ -34,7 +34,7 @@ router.get("/:userId", auth, async function (req, res, next) {
   }
 });
 
-router.get("/appointment/:apppointmentId", auth, async function (
+router.get("/appointment/:appointmentId", auth, async function (
   req,
   res,
   next
@@ -51,10 +51,13 @@ router.get("/appointment/:apppointmentId", auth, async function (
 
   const { patient, professional } = _appointment;
 
-  if (res.locals.userId !== patient || res.locals.userId !== professional) {
+  if (
+    res.locals.userId !== String(patient) &&
+    res.locals.userId !== String(professional)
+  ) {
     return res.status(401).json(
       createResponse({
-        error: "unauthorized access",
+        error: "Unauthorized access.",
       })
     );
   }
