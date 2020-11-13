@@ -38,12 +38,9 @@ setupIO(io);
  * Create peer server
  */
 const peerServer = PeerServer({
-  host: "localhost",
   debug: !isProduction(),
   port: 9000,
 });
-
-// app.use("/peerjs", peerServer);
 
 /**
  * Listen on provided port, on all network interfaces.
