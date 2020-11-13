@@ -40,7 +40,7 @@ setupIO(io);
 const peerServer = PeerServer({
   host: "localhost",
   debug: !isProduction(),
-  port: isProduction() ? 443 : 9000,
+  port: 9000,
 });
 
 // app.use("/peerjs", peerServer);
