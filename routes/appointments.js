@@ -1,8 +1,6 @@
 const path = require("path");
 var express = require("express");
 const mongoose = require("mongoose");
-const multer = require("multer");
-const upload = multer({ storage: multer.memoryStorage() });
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 var router = express.Router();
 
@@ -13,6 +11,7 @@ const controller = require("../controllers/appointments");
 const CustomError = require("../util/custom-error");
 const { USER, APPOINTMENT } = require("../util/constants");
 const isClientError = require("../util/is-client-error");
+const multer = require("../middleware/multer");
 
 router.get("/:userId", auth, async function (req, res, next) {
   if (res.locals.userId !== req.params.userId) {
@@ -52,8 +51,8 @@ router.get("/appointment/:appointmentId", auth, async function (
   const { patient, professional } = _appointment;
 
   if (
-    res.locals.userId !== String(patient) &&
-    res.locals.userId !== String(professional)
+    res.locals.userId !== String(patient._id) &&
+    res.locals.userId !== String(professional._id)
   ) {
     return res.status(401).json(
       createResponse({
@@ -88,15 +87,15 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
     if (!appointment) {
       return res.json(
         createResponse({
-          error: "no matching appointment found",
+          error: "No matching appointment found.",
         })
       );
     }
 
-    if (String(appointment.patient) !== res.locals.userId) {
+    if (String(appointment.patient._id) !== res.locals.userId) {
       return res.status(401).json(
         createResponse({
-          error: "unathorized operation",
+          error: "Unathorized operation.",
         })
       );
     }
@@ -107,7 +106,7 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
     ) {
       return res.json(
         createResponse({
-          error: "appointment not in eligible for checkout",
+          error: "Appointment not in eligible for checkout.",
         })
       );
     }
@@ -119,7 +118,7 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
       amount = appointment.amount;
     } else {
       amount =
-        Number(appointment.minutesBilled) * Number(process.env.CHARGE_RATE);
+        Number(appointment.duration) * 60 * Number(process.env.CHARGE_RATE);
     }
 
     try {
@@ -157,18 +156,6 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
     next(error);
   }
 });
-
-// router.get("/:appointmentId", async function (req, res, next) {
-//   try {
-//     res.json(
-//       createResponse({
-//         data: await controller.findById(req.params.conditionId),
-//       })
-//     );
-//   } catch (error) {
-//     next(error);
-//   }
-// });
 
 router.post("/:professionalId", auth, async function (req, res, next) {
   if (res.locals.userAccountType !== USER.ACCOUNT_TYPES.PATIENT) {
@@ -211,53 +198,54 @@ router.post("/:professionalId", auth, async function (req, res, next) {
   }
 });
 
-router.put("/:appointmentId", auth, upload.single("testFile"), async function (
-  req,
-  res,
-  next
-) {
-  // A patient tries an operation other than closing appointment
-  if (res.locals.userAccountType === USER.ACCOUNT_TYPES.PATIENT) {
-    const status = req.body.status;
-    if (status && status !== APPOINTMENT.STATUSES.CLOSED) {
-      return res.status(401).json(
+router.put(
+  "/:appointmentId",
+  auth,
+  multer("single", "testFile"),
+  async function (req, res, next) {
+    // A patient tries an operation other than closing appointment
+    if (res.locals.userAccountType === USER.ACCOUNT_TYPES.PATIENT) {
+      const status = req.body.status;
+      if (status && status !== APPOINTMENT.STATUSES.CLOSED) {
+        return res.status(401).json(
+          createResponse({
+            error: "Unauthorized operation.",
+          })
+        );
+      }
+    }
+
+    try {
+      const { appointmentId } = req.params;
+      const appointment = await controller.findById(appointmentId);
+      if (!appointment) {
+        return res.json(
+          createResponse({
+            error: "No matching appointment found.",
+          })
+        );
+      }
+
+      res.json(
         createResponse({
-          error: "unauthorized operation",
+          data: await controller.update(appointmentId, {
+            ...req.body,
+            file: req.file || null,
+          }),
         })
       );
+    } catch (error) {
+      if (isClientError(error)) {
+        return res.json(
+          createResponse({
+            error: error.message,
+          })
+        );
+      }
+
+      next(error);
     }
   }
-
-  try {
-    const { appointmentId } = req.params;
-    const appointment = await controller.findById(appointmentId);
-    if (!appointment) {
-      return res.json(
-        createResponse({
-          error: "no appointment match found",
-        })
-      );
-    }
-
-    res.json(
-      createResponse({
-        data: await controller.update(appointmentId, {
-          ...req.body,
-          file: req.file || null,
-        }),
-      })
-    );
-  } catch (error) {
-    if (isClientError(error)) {
-      return res.json(
-        createResponse({
-          error: error.message,
-        })
-      );
-    }
-
-    next(error);
-  }
-});
+);
 
 module.exports = router;

@@ -16,6 +16,10 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    duration: {
+      type: Number,
+      required: true,
+    },
     professional: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -39,10 +43,6 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       enum: [UNAPPROVED, APPROVED, REJECTED, CLOSED],
       default: UNAPPROVED,
-    },
-    minutesBilled: {
-      type: Number,
-      default: null,
     },
     hasBeenBilled: {
       type: Boolean,

@@ -1,13 +1,23 @@
 const bcrypt = require("bcrypt");
 const tokenGen = require("generate-sms-verification-code");
+const path = require("path");
+const fs = require("fs");
+
 const User = require("../models/user");
 const Invite = require("../models/invite");
-const { USER, TEST_RESET_CODE } = require("../util/constants");
+const {
+  USER,
+  TEST_RESET_CODE,
+  PROFILE_PICTURE_FORMATS,
+} = require("../util/constants");
 const sign = require("../routes/helpers/sign");
 const isProduction = require("../util/is-production");
 const mailer = require("../util/mailer");
 const throwError = require("./helpers/throw-error");
 
+// Helper function to build filepath
+const getFilePath = (filename) =>
+  path.join(__dirname, "..", "uploads", "profile-pics", filename);
 // Helper to normalize string properties
 const normalizeUser = (data) => {
   if (data.email) {
@@ -168,14 +178,72 @@ async function inviteAdmin(email) {
   return "Invite email sent successfully.";
 }
 
+async function getPicture(filename) {
+  return await new Promise((resolve, reject) => {
+    fs.readFile(getFilePath(filename), (err, data) => {
+      if (err) {
+        if (err.code === "ENOENT") {
+          reject(new CustomError(err.message));
+        }
+
+        reject(err);
+      }
+
+      resolve(data);
+    });
+  });
+}
+
 async function updateUser(_id, data) {
   normalizeUser(data);
 
   await checkIfTaken(data);
-  await User.updateOne({ _id }, data);
-  const res = {
-    updated: true,
-  };
+
+  const user = await User.findById(_id);
+  !user && throwError("No matching user found.");
+
+  const res = {};
+  // Check if user uploaded an image
+  if (data.file) {
+    if (!PROFILE_PICTURE_FORMATS.includes(data.file.mimetype)) {
+      throwError(
+        "file format should be one of: " + PROFILE_PICTURE_FORMATS.join(", ")
+      );
+    }
+
+    const ext = data.file.originalname.split(".").pop();
+    const fileName = `${user.username}.${ext}`;
+    const filePath = getFilePath(fileName);
+    await new Promise((resolve, reject) => {
+      fs.writeFile(filePath, data.file.buffer, (err) => {
+        if (err) {
+          reject(err);
+        }
+
+        // Delete previous picture
+        if (user.picture) {
+          fs.unlink(getFilePath(user.picture), (error) => {
+            if (error) {
+              console.log("There was an error deleting the old file");
+            }
+          });
+        }
+        resolve();
+      });
+    });
+
+    await User.updateOne(
+      { _id },
+      {
+        ...data,
+        picture: fileName,
+      }
+    );
+
+    res.picture = fileName;
+  } else {
+    await User.updateOne({ _id }, data);
+  }
 
   if (data.accountType) {
     // generate a new token with new account details
@@ -185,6 +253,7 @@ async function updateUser(_id, data) {
     });
   }
 
+  res.updated = true;
   return res;
 }
 
@@ -315,6 +384,7 @@ module.exports = {
   create,
   find,
   findByUsername,
+  getPicture,
   updateUser,
   findById,
   inviteAdmin,

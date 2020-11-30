@@ -53,6 +53,7 @@ describe("/appointments", function () {
             time: new Date(date.setHours(date.getHours() + 5)),
             patient: tempPatient._id,
             type: APPOINTMENT.TYPES.ONSITE_TESTS,
+            duration: 2,
             subject: "initial tests",
           })
           .set({

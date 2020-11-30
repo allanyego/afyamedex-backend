@@ -9,6 +9,7 @@ const createResponse = require("./helpers/create-response");
 const controller = require("../controllers/users");
 const sign = require("./helpers/sign");
 const auth = require("../middleware/auth");
+const multer = require("../middleware/multer");
 const isClientError = require("../util/is-client-error");
 const { passwordResetSchema } = require("../joi-schemas/user");
 const { USER } = require("../util/constants");
@@ -29,6 +30,18 @@ router.get("/", auth, async function (req, res, next) {
       })
     );
   } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/picture/:filename", async function (req, res, next) {
+  try {
+    res.send(await controller.getPicture(req.params.filename));
+  } catch (error) {
+    if (isClientError(error)) {
+      return res.sendStatus(404);
+    }
+
     next(error);
   }
 });
@@ -201,7 +214,11 @@ router.post("/invite", auth, async (req, res, next) => {
 });
 
 // Update user details
-router.put("/:userId", auth, async function (req, res, next) {
+router.put("/:userId", auth, multer("single", "picture"), async function (
+  req,
+  res,
+  next
+) {
   const { userAccountType, userId } = res.locals;
   const isAdmin = userAccountType === USER.ACCOUNT_TYPES.ADMIN;
   const isCurrent = userId === req.params.userId;
@@ -231,7 +248,10 @@ router.put("/:userId", auth, async function (req, res, next) {
   try {
     res.json(
       createResponse({
-        data: await controller.updateUser(req.params.userId, req.body),
+        data: await controller.updateUser(req.params.userId, {
+          ...req.body,
+          file: req.file || null,
+        }),
       })
     );
   } catch (error) {

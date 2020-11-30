@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    picture: {
+      type: String,
+      default: null,
+    },
     disabled: {
       type: Boolean,
       default: false,

@@ -21,13 +21,21 @@ const USER = {
   },
 };
 
+const PROFILE_PICTURE_FORMATS = [
+  "image/jpg",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+];
+
 const TEST_RESET_CODE = "345656";
 
 const ALLOWED_FILE_TYPES = ["doc", "docx", "pdf"];
 
 module.exports = {
-  APPOINTMENT,
-  USER,
-  TEST_RESET_CODE,
   ALLOWED_FILE_TYPES,
+  APPOINTMENT,
+  PROFILE_PICTURE_FORMATS,
+  TEST_RESET_CODE,
+  USER,
 };

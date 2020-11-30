@@ -17,8 +17,8 @@ async function add(data) {
   return await Appointment.create(data);
 }
 
+const fieldsToGet = "_id fullName";
 async function get(_id) {
-  const fieldsToGet = "_id fullName";
   return await Appointment.find({
     $or: [
       {
@@ -48,7 +48,13 @@ async function update(_id, data) {
     }
 
     const fileName = `${_id}.${ext}`;
-    const filePath = path.join(__dirname, "..", "uploads", fileName);
+    const filePath = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      "test-files",
+      fileName
+    );
     await new Promise((res, rej) => {
       fs.writeFile(filePath, data.file.buffer, (err) => {
         if (err) {
@@ -66,7 +72,6 @@ async function update(_id, data) {
         status: data.status,
         testSummary: data.testSummary,
         testFile: fileName,
-        minutesBilled: 0,
       }
     );
 
@@ -79,7 +84,9 @@ async function update(_id, data) {
 }
 
 async function findById(id) {
-  return await Appointment.findById(id);
+  return await Appointment.findById(id)
+    .populate("patient", fieldsToGet)
+    .populate("professional", fieldsToGet);
 }
 
 module.exports = {

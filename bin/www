@@ -37,10 +37,10 @@ setupIO(io);
 /**
  * Create peer server
  */
-const peerServer = PeerServer({
-  debug: !isProduction(),
-  port: 9000,
-});
+// const peerServer = PeerServer({
+//   debug: !isProduction(),
+//   port: 9000,
+// });
 
 /**
  * Listen on provided port, on all network interfaces.
