@@ -10,6 +10,7 @@ const {
   TEST_RESET_CODE,
   PROFILE_PICTURE_FORMATS,
 } = require("../util/constants");
+const CustomError = require("../util/custom-error");
 const sign = require("../routes/helpers/sign");
 const isProduction = require("../util/is-production");
 const mailer = require("../util/mailer");
@@ -217,17 +218,19 @@ async function updateUser(_id, data) {
     await new Promise((resolve, reject) => {
       fs.writeFile(filePath, data.file.buffer, (err) => {
         if (err) {
+          console.log("Editted user error", error);
           reject(err);
         }
 
         // Delete previous picture
-        if (user.picture) {
-          fs.unlink(getFilePath(user.picture), (error) => {
-            if (error) {
-              console.log("There was an error deleting the old file");
-            }
-          });
-        }
+        // if (user.picture) {
+        //   fs.unlink(getFilePath(user.picture), (error) => {
+        //     if (error) {
+        //       console.log("There was an error deleting the old file");
+        //     }
+        //   });
+        // }
+        console.log("Editted user image", filePath);
         resolve();
       });
     });
