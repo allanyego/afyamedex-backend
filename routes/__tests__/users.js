@@ -252,7 +252,6 @@ describe("/users", function () {
             Authorization: `Bearer ${testUser.token}`,
           });
 
-        console.log(resp.body);
         expect(resp.status).toBe(200);
         expect(resp.body.data.length).toBe(1);
         done();

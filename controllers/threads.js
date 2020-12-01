@@ -87,7 +87,7 @@ async function getUserThreads(userId) {
     },
   })
     .populate("lastMessage", "body createdAt")
-    .populate("participants", "_id fullName");
+    .populate("participants", "_id fullName picture");
 }
 
 async function getUserMessages(userA, userB) {
