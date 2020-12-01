@@ -15,11 +15,14 @@ let testFile;
 afterAll(async function () {
   await Appointment.deleteMany({});
   if (testFile) {
-    fs.unlink(path.join(__dirname, "..", "..", "uploads", testFile), (err) => {
-      if (err) {
-        console.log("error deleting file", testFile, err);
+    fs.unlink(
+      path.join(__dirname, "..", "..", "uploads", "test-files", testFile),
+      (err) => {
+        if (err) {
+          console.log("error deleting file", testFile, err);
+        }
       }
-    });
+    );
   }
 });
 

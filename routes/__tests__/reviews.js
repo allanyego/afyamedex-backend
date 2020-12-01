@@ -20,18 +20,22 @@ const url = `${BASE_URL}/reviews`;
 
 beforeAll(async function () {
   const date = new Date();
-  testAppointment = await Appointment.create({
-    date,
-    time: new Date(date.setHours(date.getHours() + 11)),
-    patient: tempPatient._id,
-    professional: testDoc._id,
-    type: APPOINTMENT.TYPES.VIRTUAL_CONSULTATION,
-    subject: "initial meet",
-    status: APPOINTMENT.STATUSES.CLOSED,
-    minutesBilled: 30,
-    hasBeenBilled: true,
-    paymentId: String(Date.now()),
-  });
+  try {
+    testAppointment = await Appointment.create({
+      date,
+      time: new Date(date.setHours(date.getHours() + 11)),
+      patient: tempPatient._id,
+      professional: testDoc._id,
+      type: APPOINTMENT.TYPES.VIRTUAL_CONSULTATION,
+      subject: "initial meet",
+      status: APPOINTMENT.STATUSES.CLOSED,
+      duration: 1,
+      hasBeenBilled: true,
+      paymentId: String(Date.now()),
+    });
+  } catch (e) {
+    console.log("test appointment creation error", e);
+  }
 });
 
 afterAll(async function () {
