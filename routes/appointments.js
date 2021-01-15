@@ -8,7 +8,6 @@ const auth = require("../middleware/auth");
 const schema = require("../joi-schemas/appointment");
 const createResponse = require("./helpers/create-response");
 const controller = require("../controllers/appointments");
-const CustomError = require("../util/custom-error");
 const { USER, APPOINTMENT } = require("../util/constants");
 const isClientError = require("../util/is-client-error");
 const multer = require("../middleware/multer");
@@ -33,44 +32,56 @@ router.get("/:userId", auth, async function (req, res, next) {
   }
 });
 
-router.get("/appointment/:appointmentId", auth, async function (
-  req,
-  res,
-  next
-) {
-  const _appointment = await controller.findById(req.params.appointmentId);
-
-  if (!_appointment) {
-    return res.json(
-      createResponse({
-        error: "No matching appoinment found.",
-      })
-    );
-  }
-
-  const { patient, professional } = _appointment;
-
-  if (
-    res.locals.userId !== String(patient._id) &&
-    res.locals.userId !== String(professional._id)
-  ) {
-    return res.status(401).json(
-      createResponse({
-        error: "Unauthorized access.",
-      })
-    );
-  }
-
+router.get("/:userId/payments", auth, async function (req, res, next) {
   try {
     res.json(
       createResponse({
-        data: _appointment,
+        data: await controller.getPayments(res.locals.userId),
       })
     );
   } catch (error) {
     next(error);
   }
 });
+
+router.get(
+  "/appointment/:appointmentId",
+  auth,
+  async function (req, res, next) {
+    const _appointment = await controller.findById(req.params.appointmentId);
+
+    if (!_appointment) {
+      return res.json(
+        createResponse({
+          error: "No matching appoinment found.",
+        })
+      );
+    }
+
+    const { patient, professional } = _appointment;
+
+    if (
+      res.locals.userId !== String(patient._id) &&
+      res.locals.userId !== String(professional._id)
+    ) {
+      return res.status(401).json(
+        createResponse({
+          error: "Unauthorized access.",
+        })
+      );
+    }
+
+    try {
+      res.json(
+        createResponse({
+          data: _appointment,
+        })
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 router.get("/test-file/:testFile", auth, async function (req, res, next) {
   try {

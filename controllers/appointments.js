@@ -18,6 +18,7 @@ async function add(data) {
 }
 
 const fieldsToGet = "_id fullName";
+
 async function get(_id) {
   return await Appointment.find({
     $or: [
@@ -32,6 +33,15 @@ async function get(_id) {
         },
       },
     ],
+  })
+    .populate("professional", fieldsToGet)
+    .populate("patient", fieldsToGet);
+}
+
+async function getPayments(userId) {
+  return await Appointment.find({
+    professional: userId,
+    hasBeenBilled: true,
   })
     .populate("professional", fieldsToGet)
     .populate("patient", fieldsToGet);
@@ -92,6 +102,7 @@ async function findById(id) {
 module.exports = {
   add,
   get,
+  getPayments,
   update,
   findById,
 };
