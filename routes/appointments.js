@@ -85,7 +85,9 @@ router.get(
 
 router.get("/test-file/:testFile", auth, async function (req, res, next) {
   try {
-    res.sendFile(path.join(__dirname, "..", "uploads", req.params.testFile));
+    res.sendFile(
+      path.join(__dirname, "..", "uploads", "test-files", req.params.testFile)
+    );
   } catch (error) {
     next(error);
   }

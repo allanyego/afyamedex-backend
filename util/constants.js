@@ -28,12 +28,15 @@ const PROFILE_PICTURE_FORMATS = [
   "image/gif",
 ];
 
+const ALLOWED_VIDEO_FILE_TYPES = ["video/mp4", "video/webm"];
+
 const TEST_RESET_CODE = "345656";
 
 const ALLOWED_FILE_TYPES = ["doc", "docx", "pdf"];
 
 module.exports = {
   ALLOWED_FILE_TYPES,
+  ALLOWED_VIDEO_FILE_TYPES,
   APPOINTMENT,
   PROFILE_PICTURE_FORMATS,
   TEST_RESET_CODE,

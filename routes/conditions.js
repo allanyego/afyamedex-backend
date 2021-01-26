@@ -1,5 +1,6 @@
-var express = require("express");
-var router = express.Router();
+const path = require("path");
+const express = require("express");
+const router = express.Router();
 
 const auth = require("../middleware/auth");
 const schema = require("../joi-schemas/condition");
@@ -9,6 +10,8 @@ const controller = require("../controllers/conditions");
 const usersController = require("../controllers/users");
 const isClientError = require("../util/is-client-error");
 const { USER } = require("../util/constants");
+const multer = require("../middleware/multer");
+const sendVideo = require("../middleware/send-video");
 
 router.get("/", auth, async function (req, res, next) {
   const isAdmin = res.locals.userAccountType === USER.ACCOUNT_TYPES.ADMIN;
@@ -39,54 +42,84 @@ router.get("/:conditionId", auth, async function (req, res, next) {
   }
 });
 
-router.post("/", auth, async function (req, res, next) {
-  const accType = res.locals.userAccountType;
-  if (!accType || accType === USER.ACCOUNT_TYPES.PATIENT) {
-    return res.status(401).json(
-      createResponse({
-        error: "Unauthorized operation",
-      })
-    );
-  }
+router.get(
+  "/media/:conditionId",
+  async function (req, res, next) {
+    try {
+      const condition = await controller.findById(req.params.conditionId);
+      const { media } = condition;
 
-  const user = await usersController.findById(res.locals.userId);
+      if (media.kind === "image") {
+        res.sendFile(
+          path.join(__dirname, "..", "uploads", "condition-files", media.file)
+        );
+      } else {
+        res.locals.media = media;
+        next();
+      }
+    } catch (error) {
+      next(error);
+    }
+  },
+  sendVideo
+);
 
-  if (user.disabled) {
-    return res.json(
-      createResponse({
-        error: "Account disabled. Can't post.",
-      })
-    );
-  }
+router.post(
+  "/",
+  auth,
+  multer("single", "media"),
+  async function (req, res, next) {
+    const accType = res.locals.userAccountType;
+    if (!accType || accType === USER.ACCOUNT_TYPES.PATIENT) {
+      return res.status(401).json(
+        createResponse({
+          error: "Unauthorized operation",
+        })
+      );
+    }
 
-  try {
-    await schema.newSchema.validateAsync(req.body);
-  } catch (error) {
-    return res.status(400).json(
-      createResponse({
-        error: error.message,
-      })
-    );
-  }
+    const user = await usersController.findById(res.locals.userId);
 
-  try {
-    res.status(201).json(
-      createResponse({
-        data: await controller.create(req.body),
-      })
-    );
-  } catch (error) {
-    if (isClientError(error)) {
+    if (user.disabled) {
       return res.json(
+        createResponse({
+          error: "Account disabled. Can't post.",
+        })
+      );
+    }
+
+    try {
+      await schema.newSchema.validateAsync(req.body);
+    } catch (error) {
+      return res.status(400).json(
         createResponse({
           error: error.message,
         })
       );
     }
 
-    next(error);
+    try {
+      res.status(201).json(
+        createResponse({
+          data: await controller.create({
+            ...req.body,
+            file: req.file,
+          }),
+        })
+      );
+    } catch (error) {
+      if (isClientError(error)) {
+        return res.json(
+          createResponse({
+            error: error.message,
+          })
+        );
+      }
+
+      next(error);
+    }
   }
-});
+);
 
 router.put("/:conditionId", auth, async function (req, res, next) {
   const accType = res.locals.userAccountType;

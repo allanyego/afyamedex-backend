@@ -23,6 +23,17 @@ const conditionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    media: {
+      kind: {
+        type: String,
+        enum: [null, "video", "image"],
+        default: null,
+      },
+      file: {
+        type: String,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,

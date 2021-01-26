@@ -82,6 +82,7 @@ async function update(_id, data) {
         status: data.status,
         testSummary: data.testSummary,
         testFile: fileName,
+        dateBilled: data.dateBilled || null,
       }
     );
 

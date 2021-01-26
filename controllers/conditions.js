@@ -1,7 +1,13 @@
+const fs = require("fs");
+const path = require("path");
+
 const Condition = require("../models/condition");
-const CustomError = require("../util/custom-error");
 const throwError = require("./helpers/throw-error");
 const ThreadController = require("./threads");
+const {
+  PROFILE_PICTURE_FORMATS,
+  ALLOWED_VIDEO_FILE_TYPES,
+} = require("../util/constants");
 
 // Helper to check entity existence
 async function checkIfExists(name) {
@@ -10,9 +16,40 @@ async function checkIfExists(name) {
   }
 }
 
+// Helper to check mime type
+function checkExtension(file) {
+  const ext = file.originalname.split(".").pop();
+  if (PROFILE_PICTURE_FORMATS.includes(file.mimetype)) {
+    return [ext, "image"];
+  } else if (ALLOWED_VIDEO_FILE_TYPES.includes(file.mimetype)) {
+    return [ext, "video"];
+  }
+
+  return false;
+}
+
+// Helper to build up file location path
+function getFilePath(fileName) {
+  return path.join(__dirname, "..", "uploads", "condition-files", fileName);
+}
+
 async function create(data) {
   data.name = data.name.toLowerCase();
   await checkIfExists(data.name);
+  let extDetail;
+
+  if (data.file) {
+    extDetail = checkExtension(data.file);
+    if (!extDetail) {
+      throwError(
+        "file format should be one of: " +
+          PROFILE_PICTURE_FORMATS.join(", ") +
+          ", ",
+        ALLOWED_VIDEO_FILE_TYPES.join(", ")
+      );
+    }
+  }
+
   // If client wants to create a thread along with
   // condition
   data.startThread &&
@@ -24,7 +61,28 @@ async function create(data) {
         console.log("could not create thread", err);
       });
 
-  return await Condition.create(data);
+  const newCondition = await Condition.create(data);
+  if (data.file) {
+    const [extension, mediaType] = extDetail;
+    const media = `${newCondition._id}.${extension}`;
+    await new Promise((resolve, reject) => {
+      fs.writeFile(getFilePath(media), data.file.buffer, async (err) => {
+        if (err) {
+          reject(err);
+        }
+
+        await newCondition.updateOne({
+          media: {
+            kind: mediaType,
+            file: media,
+          },
+        });
+        resolve();
+      });
+    });
+  }
+
+  return newCondition;
 }
 
 async function find({ search, includeDisabled = false }) {

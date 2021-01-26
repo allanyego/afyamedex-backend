@@ -48,6 +48,9 @@ const appointmentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    dateBilled: {
+      type: Number,
+    },
     amount: {
       type: Number,
       default: null,
