@@ -16,17 +16,11 @@ const editSchema = Joi.object({
   email: Joi.string().trim(),
   bio: Joi.string(),
   accountType: Joi.string(),
-  experience: Joi.string().allow(""),
+  experience: Joi.number(),
   phone: Joi.string().allow(""),
-  education: Joi.array().items(
-    Joi.object({
-      institution: Joi.string(),
-      areaOfStudy: Joi.string(),
-      startDate: Joi.string(),
-      endDate: Joi.string(),
-    })
-  ),
-  speciality: Joi.array().items(Joi.string()),
+  available: Joi.boolean(),
+  education: Joi.array().items(Joi.object()),
+  speciality: Joi.string(),
   conditions: Joi.array().items(Joi.string()),
 });
 

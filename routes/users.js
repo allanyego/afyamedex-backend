@@ -174,6 +174,47 @@ router.post("/", async function (req, res, next) {
   }
 });
 
+// Handle notification registration and deregistration
+router.post("/notifications/:userId", auth, async (req, res, next) => {
+  const { userId } = req.params;
+  const { remove } = req.query;
+  const { token } = req.body;
+
+  if (res.locals.userId !== userId) {
+    return res.status(401).json(
+      createResponse({
+        error: "Unathorized operation",
+      })
+    );
+  }
+
+  try {
+    if (remove) {
+      res.json(
+        createResponse({
+          data: await controller.removeNotificationToken(userId, token),
+        })
+      );
+    } else {
+      res.json(
+        createResponse({
+          data: await controller.addNotificationToken(userId, token),
+        })
+      );
+    }
+  } catch (error) {
+    if (isClientError(error)) {
+      return res.json(
+        createResponse({
+          error: error.message,
+        })
+      );
+    }
+
+    next(error);
+  }
+});
+
 // Admin invite
 router.post("/invite", auth, async (req, res, next) => {
   if (res.locals.userAccountType !== USER.ACCOUNT_TYPES.ADMIN) {
@@ -214,56 +255,57 @@ router.post("/invite", auth, async (req, res, next) => {
 });
 
 // Update user details
-router.put("/:userId", auth, multer("single", "picture"), async function (
-  req,
-  res,
-  next
-) {
-  const { userAccountType, userId } = res.locals;
-  const isAdmin = userAccountType === USER.ACCOUNT_TYPES.ADMIN;
-  const isCurrent = userId === req.params.userId;
+router.put(
+  "/:userId",
+  auth,
+  multer("single", "picture"),
+  async function (req, res, next) {
+    const { userAccountType, userId } = res.locals;
+    const isAdmin = userAccountType === USER.ACCOUNT_TYPES.ADMIN;
+    const isCurrent = userId === req.params.userId;
 
-  if (!isCurrent && !isAdmin) {
-    return res.status(401).json(
-      createResponse({
-        error: "Unauthorized operation.",
-      })
-    );
-  }
-
-  try {
-    if (isAdmin && !isCurrent) {
-      await adminSchema.adminEditSchema.validateAsync(req.body);
-    } else {
-      await schema.editSchema.validateAsync(req.body);
+    if (!isCurrent && !isAdmin) {
+      return res.status(401).json(
+        createResponse({
+          error: "Unauthorized operation.",
+        })
+      );
     }
-  } catch (error) {
-    return res.status(400).json(
-      createResponse({
-        error: error.message,
-      })
-    );
-  }
 
-  try {
-    res.json(
-      createResponse({
-        data: await controller.updateUser(req.params.userId, {
-          ...req.body,
-          file: req.file || null,
-        }),
-      })
-    );
-  } catch (error) {
-    if (isClientError(error)) {
-      return res.json(
+    try {
+      if (isAdmin && !isCurrent) {
+        await adminSchema.adminEditSchema.validateAsync(req.body);
+      } else {
+        await schema.editSchema.validateAsync(req.body);
+      }
+    } catch (error) {
+      return res.status(400).json(
         createResponse({
           error: error.message,
         })
       );
     }
-    next(error);
+
+    try {
+      res.json(
+        createResponse({
+          data: await controller.updateUser(req.params.userId, {
+            ...req.body,
+            file: req.file || null,
+          }),
+        })
+      );
+    } catch (error) {
+      if (isClientError(error)) {
+        return res.json(
+          createResponse({
+            error: error.message,
+          })
+        );
+      }
+      next(error);
+    }
   }
-});
+);
 
 module.exports = router;

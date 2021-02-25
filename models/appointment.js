@@ -18,7 +18,7 @@ const appointmentSchema = new mongoose.Schema(
     },
     duration: {
       type: Number,
-      required: true,
+      default: null,
     },
     professional: {
       type: mongoose.Schema.Types.ObjectId,

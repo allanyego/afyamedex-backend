@@ -48,6 +48,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    available: {
+      type: Boolean,
+      default: true,
+    },
     password: {
       type: String,
       required: true,
@@ -59,6 +63,10 @@ const userSchema = new mongoose.Schema(
     },
     experience: Number,
     speciality: {
+      type: String,
+      default: null,
+    },
+    devices: {
       type: [String],
       default: [],
     },

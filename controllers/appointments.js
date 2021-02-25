@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const Appointment = require("../models/appointment");
+const User = require("../models/user");
 const { ALLOWED_FILE_TYPES } = require("../util/constants");
 const throwError = require("./helpers/throw-error");
 
@@ -45,6 +46,30 @@ async function getPayments(userId) {
   })
     .populate("professional", fieldsToGet)
     .populate("patient", fieldsToGet);
+}
+
+async function getPaymentSummary(opts) {
+  if (opts) {
+    return await Appointment.find({
+      ...opts,
+      hasBeenBilled: true,
+    })
+      .populate("patient", fieldsToGet)
+      .populate("professional", fieldsToGet);
+  }
+
+  const matchedAppointments = await Appointment.aggregate([
+    { $match: { hasBeenBilled: true } },
+    {
+      $group: {
+        _id: { patient: "$patient", professional: "$professional" },
+        totalPayments: { $sum: "$amount" },
+        appointmentCount: { $sum: 1 },
+      },
+    },
+  ]);
+
+  return matchedAppointments;
 }
 
 async function update(_id, data) {
@@ -104,6 +129,7 @@ module.exports = {
   add,
   get,
   getPayments,
+  getPaymentSummary,
   update,
   findById,
 };

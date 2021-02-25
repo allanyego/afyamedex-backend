@@ -195,6 +195,26 @@ async function getPicture(filename) {
   });
 }
 
+async function addNotificationToken(userId, token) {
+  const user = await User.findById(userId);
+  !user && throwError();
+  user.devices.push({
+    token,
+  });
+  return await user.save();
+}
+
+async function removeNotificationToken(userId, token) {
+  return await User.updateOne(
+    {
+      _id: userId,
+    },
+    {
+      $pull: { token },
+    }
+  );
+}
+
 async function updateUser(_id, data) {
   normalizeUser(data);
 
@@ -382,6 +402,7 @@ async function confirmReset({ resetCode, newPassword, username }) {
 }
 
 module.exports = {
+  addNotificationToken,
   authenticate,
   confirmReset,
   create,
@@ -391,5 +412,6 @@ module.exports = {
   updateUser,
   findById,
   inviteAdmin,
+  removeNotificationToken,
   resetPassword,
 };

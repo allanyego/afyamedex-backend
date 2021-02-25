@@ -44,6 +44,25 @@ router.get("/:userId/payments", auth, async function (req, res, next) {
   }
 });
 
+router.get("/payments/summary", auth, async function (req, res, next) {
+  let opts = null;
+  const { professional, patient } = req.query;
+  console.log("Got request", { professional, patient }, req.query);
+  if (professional && patient) {
+    opts = { patient, professional };
+  }
+
+  try {
+    res.json(
+      createResponse({
+        data: await controller.getPaymentSummary(opts),
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get(
   "/appointment/:appointmentId",
   auth,
@@ -130,8 +149,9 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
     if (appointment.type === APPOINTMENT.TYPES.ONSITE_TESTS) {
       amount = appointment.amount;
     } else {
-      amount =
-        Number(appointment.duration) * 60 * Number(process.env.CHARGE_RATE);
+      let duration = Number(appointment.duration);
+      duration = duration > 10 ? duration : 10;
+      amount = duration * Number(process.env.CHARGE_RATE);
     }
 
     try {
@@ -150,6 +170,7 @@ router.get("/checkout/:appointmentId", auth, async (req, res, next) => {
           })
         );
       }
+      console.log("Stripe payment error", error);
       return res.json(
         createResponse({
           error: "there was an error processing the payment",
