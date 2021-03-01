@@ -196,28 +196,16 @@ async function getPicture(filename) {
 }
 
 async function addNotificationToken(_id, token) {
-  // const user = await User.findById(userId);
-  // !user && throwError();
-  // user.devices.push({
-  //   token,
-  // });
-  // return await user.save();
-  try {
-    console.log("Saving token", token);
-    return await User.updateOne(
-      {
-        _id,
+  return await User.updateOne(
+    {
+      _id,
+    },
+    {
+      $addToSet: {
+        devices: token,
       },
-      {
-        $push: {
-          devices: { token },
-        },
-      }
-    );
-  } catch (error) {
-    console.log("An error in notification token", error);
-    throw error;
-  }
+    }
+  );
 }
 
 async function removeNotificationToken(userId, token) {
@@ -226,7 +214,7 @@ async function removeNotificationToken(userId, token) {
       _id: userId,
     },
     {
-      $pull: { devices: { token } },
+      $pull: { devices: token },
     }
   );
 }

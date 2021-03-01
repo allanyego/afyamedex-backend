@@ -67,11 +67,7 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     devices: {
-      type: [
-        {
-          token: String,
-        },
-      ],
+      type: [String],
       default: [],
     },
     education: {
