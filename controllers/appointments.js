@@ -24,7 +24,7 @@ async function add(data) {
   // Get professional's devices' tokens, if any, and send notification
   const professional = await User.findById(data.professional).select("devices");
   const tokens = mapTokens(professional.devices, "token");
-  await sendPushNotification(
+  sendPushNotification(
     tokens,
     {
       notification: {
@@ -36,7 +36,7 @@ async function add(data) {
     {
       timeToLive: notificationTTL,
     }
-  );
+  ).then((res) => null);
 
   return newAppointment;
 }
@@ -96,6 +96,8 @@ async function getPaymentSummary(opts) {
 }
 
 async function update(_id, data) {
+  const appointment = await Appointment.findById(_id);
+
   // Check it has a test file
   if (data.file) {
     const ext = data.file.originalname.split(".").pop();
@@ -123,8 +125,6 @@ async function update(_id, data) {
       });
     });
 
-    const appointment = await Appointment.findById(_id);
-
     await appointment.updateOne({
       amount: data.amount,
       status: data.status,
@@ -150,7 +150,7 @@ async function update(_id, data) {
       "devices",
       patient.devices
     );
-    await sendPushNotification(
+    sendPushNotification(
       tokens,
       {
         notification: {
@@ -163,7 +163,7 @@ async function update(_id, data) {
       {
         timeToLive: notificationTTL,
       }
-    );
+    ).then((res) => null);
   }
 
   return await Appointment.updateOne({ _id }, data);
