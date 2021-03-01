@@ -12,8 +12,6 @@ async function sendPushNotification(token, payload, options) {
     return false;
   }
 
-  console.log("Sending notifications to", token);
-
   return await admin.messaging().sendToDevice(token, payload, options);
 }
 
