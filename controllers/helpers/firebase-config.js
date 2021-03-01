@@ -2,7 +2,7 @@ module.exports = {
   type: "service_account",
   project_id: "sf-server-35dd9",
   private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY,
+  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   client_email:
     "firebase-adminsdk-l0biv@sf-server-35dd9.iam.gserviceaccount.com",
   client_id: "103790085668282696049",
