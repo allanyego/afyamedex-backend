@@ -3,6 +3,7 @@ const path = require("path");
 const Appointment = require("../models/appointment");
 const User = require("../models/user");
 const { ALLOWED_FILE_TYPES, APPOINTMENT } = require("../util/constants");
+const mapTokens = require("./helpers/map-tokens");
 const sendPushNotification = require("./helpers/send-push-notification");
 const throwError = require("./helpers/throw-error");
 
@@ -23,7 +24,7 @@ async function add(data) {
   // Get professional's devices' tokens, if any, and send notification
   const professional = await User.findById(data.professional).select("devices");
   await sendPushNotification(
-    professional.devices,
+    mapTokens(professional.devices, "token"),
     {
       notification: {
         title: "Appointment Request",
@@ -136,7 +137,7 @@ async function update(_id, data) {
       // Find patient and send notification to registered tokens
       const patient = await User.findById(appointment.patient);
       await sendPushNotification(
-        patient.devices,
+        mapTokens(patient.devices, "token"),
         {
           notification: {
             title: "Appointment Response",
