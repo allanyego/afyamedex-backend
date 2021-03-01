@@ -24,7 +24,12 @@ async function add(data) {
   // Get professional's devices' tokens, if any, and send notification
   const professional = await User.findById(data.professional).select("devices");
   const tokens = mapTokens(professional.devices, "token");
-  console.log("Sending notifications to", tokens);
+  console.log(
+    "Sending notifications to",
+    tokens,
+    "devices",
+    professional.devices
+  );
   await sendPushNotification(
     tokens,
     {
@@ -140,7 +145,12 @@ async function update(_id, data) {
       // Find patient and send notification to registered tokens
       const patient = await User.findById(appointment.patient);
       const tokens = mapTokens(patient.devices, "token");
-      console.log("Sending notifications to", tokens);
+      console.log(
+        "Sending notifications to tokens",
+        tokens,
+        "devices",
+        patient.devices
+      );
       await sendPushNotification(
         tokens,
         {
