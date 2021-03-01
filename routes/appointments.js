@@ -47,7 +47,7 @@ router.get("/:userId/payments", auth, async function (req, res, next) {
 router.get("/payments/summary", auth, async function (req, res, next) {
   let opts = null;
   const { professional, patient } = req.query;
-  console.log("Got request", { professional, patient }, req.query);
+
   if (professional && patient) {
     opts = { patient, professional };
   }

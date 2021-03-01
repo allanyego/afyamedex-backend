@@ -178,7 +178,6 @@ router.post("/", async function (req, res, next) {
 router.post("/notifications/:userId", auth, async (req, res, next) => {
   const { userId } = req.params;
   const { remove } = req.query;
-  const { token } = req.body;
 
   if (res.locals.userId !== userId) {
     return res.status(401).json(
@@ -187,6 +186,18 @@ router.post("/notifications/:userId", auth, async (req, res, next) => {
       })
     );
   }
+
+  try {
+    await schema.notificationSchema.validateAsync(req.body);
+  } catch (error) {
+    return res.status(400).json(
+      createResponse({
+        error: error.message,
+      })
+    );
+  }
+
+  const { token } = req.body;
 
   try {
     if (remove) {

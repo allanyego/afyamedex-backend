@@ -47,11 +47,11 @@ router.get(
   async function (req, res, next) {
     try {
       const condition = await controller.findById(req.params.conditionId);
-      const { media } = condition;
+      const { mediaKind, mediaFile } = condition;
 
-      if (media.kind === "image") {
+      if (mediaKind === "image") {
         res.sendFile(
-          path.join(__dirname, "..", "uploads", "condition-files", media.file)
+          path.join(__dirname, "..", "uploads", "condition-files", mediaFile)
         );
       } else {
         res.locals.media = media;

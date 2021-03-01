@@ -30,8 +30,13 @@ const passwordResetSchema = Joi.object({
   username: Joi.string().required().trim(),
 });
 
+const notificationSchema = Joi.object({
+  token: Joi.string().required(),
+});
+
 module.exports = {
   newSchema,
   editSchema,
+  notificationSchema,
   passwordResetSchema,
 };

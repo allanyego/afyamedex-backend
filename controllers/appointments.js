@@ -2,8 +2,11 @@ const fs = require("fs");
 const path = require("path");
 const Appointment = require("../models/appointment");
 const User = require("../models/user");
-const { ALLOWED_FILE_TYPES } = require("../util/constants");
+const { ALLOWED_FILE_TYPES, APPOINTMENT } = require("../util/constants");
+const sendPushNotification = require("./helpers/send-push-notification");
 const throwError = require("./helpers/throw-error");
+
+const notificationTTL = 60 * 60 * 24 * 3; // Upto three days,
 
 async function add(data) {
   if (
@@ -15,7 +18,25 @@ async function add(data) {
   ) {
     throwError("Selected time slot is occupied.");
   }
-  return await Appointment.create(data);
+
+  const newAppointment = await Appointment.create(data);
+  // Get professional's devices' tokens, if any, and send notification
+  const professional = await User.findById(data.professional).select("devices");
+  await sendPushNotification(
+    professional.devices,
+    {
+      notification: {
+        title: "Appointment Request",
+        body:
+          "You have received a new request for an appointment. Open the app to respond.",
+      },
+    },
+    {
+      timeToLive: notificationTTL,
+    }
+  );
+
+  return newAppointment;
 }
 
 const fieldsToGet = "_id fullName";
@@ -100,16 +121,35 @@ async function update(_id, data) {
       });
     });
 
-    await Appointment.updateOne(
-      { _id },
-      {
-        amount: data.amount,
-        status: data.status,
-        testSummary: data.testSummary,
-        testFile: fileName,
-        dateBilled: data.dateBilled || null,
-      }
-    );
+    const appointment = await Appointment.findById(_id);
+
+    await appointment.updateOne({
+      amount: data.amount,
+      status: data.status,
+      testSummary: data.testSummary,
+      testFile: fileName,
+      dateBilled: data.dateBilled || null,
+    });
+
+    const { APPROVED, REJECTED } = APPOINTMENT.STATUSES;
+    if (data.status === APPROVED || data.status === REJECTED) {
+      // Find patient and send notification to registered tokens
+      const patient = await User.findById(appointment.patient);
+      await sendPushNotification(
+        patient.devices,
+        {
+          notification: {
+            title: "Appointment Response",
+            body: `Your appointment request has been ${
+              data.status === APPROVED ? "approved" : "rejected"
+            }.`,
+          },
+        },
+        {
+          timeToLive: notificationTTL,
+        }
+      );
+    }
 
     return {
       testFile: fileName,

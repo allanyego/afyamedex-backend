@@ -210,7 +210,7 @@ async function removeNotificationToken(userId, token) {
       _id: userId,
     },
     {
-      $pull: { token },
+      $pull: { devices: { token } },
     }
   );
 }
@@ -242,6 +242,7 @@ async function updateUser(_id, data) {
           reject(err);
         }
 
+        // Mmmh, the file is getting overwritten though
         // Delete previous picture
         // if (user.picture) {
         //   fs.unlink(getFilePath(user.picture), (error) => {
@@ -250,7 +251,7 @@ async function updateUser(_id, data) {
         //     }
         //   });
         // }
-        console.log("Editted user image", filePath);
+
         resolve();
       });
     });
