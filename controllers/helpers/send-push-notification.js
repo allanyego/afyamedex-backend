@@ -8,6 +8,10 @@ admin.initializeApp({
 });
 
 async function sendPushNotification(token, payload, options) {
+  if (Array.isArray(token) && !token.length) {
+    return false;
+  }
+
   return await admin.messaging().sendToDevice(token, payload, options);
 }
 
