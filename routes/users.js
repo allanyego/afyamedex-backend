@@ -190,6 +190,12 @@ router.post("/notifications/:userId", auth, async (req, res, next) => {
   try {
     await schema.notificationSchema.validateAsync(req.body);
   } catch (error) {
+    console.log(
+      "\n\n---\nNotification validation failed:",
+      error,
+      "Request body:",
+      req.body
+    );
     return res.status(400).json(
       createResponse({
         error: error.message,
