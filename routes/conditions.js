@@ -5,6 +5,7 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 const schema = require("../joi-schemas/condition");
 const adminSchema = require("../joi-schemas/admin");
+const commentSchema = require("../joi-schemas/comment");
 const createResponse = require("./helpers/create-response");
 const controller = require("../controllers/conditions");
 const usersController = require("../controllers/users");
@@ -35,6 +36,18 @@ router.get("/:conditionId", auth, async function (req, res, next) {
     res.json(
       createResponse({
         data: await controller.findById(req.params.conditionId),
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/comments/:conditionId", auth, async function (req, res, next) {
+  try {
+    res.json(
+      createResponse({
+        data: await controller.getPostComments(req.params.conditionId),
       })
     );
   } catch (error) {
@@ -121,6 +134,36 @@ router.post(
   }
 );
 
+router.post("/comments/:conditionId", auth, async function (req, res, next) {
+  try {
+    await commentSchema.newSchema.validateAsync(req.body);
+  } catch (error) {
+    return res.status(400).json(
+      createResponse({
+        error: error.message,
+      })
+    );
+  }
+
+  try {
+    res.json(
+      createResponse({
+        data: await controller.addPostComment(req.params.conditionId, req.body),
+      })
+    );
+  } catch (error) {
+    if (isClientError(error)) {
+      return res.json(
+        createResponse({
+          error: error.message,
+        })
+      );
+    }
+
+    next(error);
+  }
+});
+
 router.put("/:conditionId", auth, async function (req, res, next) {
   const accType = res.locals.userAccountType;
   const isAdmin = accType === USER.ACCOUNT_TYPES.ADMIN;
@@ -145,6 +188,29 @@ router.put("/:conditionId", auth, async function (req, res, next) {
         data: await controller.updateCondition(
           req.params.conditionId,
           req.body
+        ),
+      })
+    );
+  } catch (error) {
+    if (isClientError(error)) {
+      return res.json(
+        createResponse({
+          error: error.message,
+        })
+      );
+    }
+
+    next(error);
+  }
+});
+
+router.delete("/comments/:commentId", auth, async function (req, res, next) {
+  try {
+    res.json(
+      createResponse({
+        data: await controller.deleteComment(
+          req.params.commentId,
+          res.locals.userId
         ),
       })
     );

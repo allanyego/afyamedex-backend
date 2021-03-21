@@ -141,7 +141,6 @@ async function update(_id, data) {
   if (data.status === APPROVED || data.status === REJECTED) {
     // Find patient and send notification to registered tokens
     const patient = await User.findById(appointment.patient);
-    console.log("Sending notifications to tokens", patient.devices);
     sendPushNotification(
       patient.devices,
       {

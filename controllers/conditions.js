@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
+const Comment = require("../models/comment");
 const throwError = require("./helpers/throw-error");
 const ThreadController = require("./threads");
 const {
@@ -133,13 +134,7 @@ async function find({ search, includeDisabled = false }) {
     queryText += ` ${hasWhere ? "AND" : "WHERE"}` + " disabled=false";
   }
 
-  const queryOpt = {
-    name: "find-conditions",
-    text: queryText,
-    values,
-  };
-
-  const res = await dbClient.query(queryOpt);
+  const res = await dbClient.query(queryText, values);
   return res.rows;
 }
 
@@ -178,9 +173,35 @@ async function updateCondition(id, data) {
   return findById(condition.id);
 }
 
+async function getPostComments(condition) {
+  return await Comment.find({
+    condition,
+  })
+    .sort({ createdAt: "asc" })
+    .populate("user", "fullName _id");
+}
+
+async function addPostComment(condition, data) {
+  if (await findById(condition)) {
+    return await Comment.create({
+      condition,
+      ...data,
+    });
+  }
+}
+
+async function deleteComment(_id) {
+  return await Comment.deleteMany({
+    _id,
+  });
+}
+
 module.exports = {
   create,
   find,
   findById,
   updateCondition,
+  addPostComment,
+  deleteComment,
+  getPostComments,
 };
